@@ -1,0 +1,19 @@
+name: chromatin-transformers
+dependencies:
+  - python==3.9.7
+  - pytorch
+  - torchvision
+  - pip:
+    - jupyter==1.0.0
+    - matplotlib==3.5.1
+    - numpy==1.22.3
+    - scipy==1.8.0
+    - pandas==1.4.1
+    - tables==3.7.0
+    - einops==0.4.1
+    - sklearn==0.0
+    - statsmodels==0.13.2
+    - scikit-image==0.19.2
+    - biopython==1.79
+    - pysam==0.18.0
+    - six>=1.15.0
