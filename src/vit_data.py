@@ -89,7 +89,7 @@ def main():
                 
                 timer.print_progress(i, len(orfs), conditional=(i % 100 == 0))
 
-        write_pickle(imgs, 'data/mnase_10x100_cd_{}.pkl')
+        write_pickle(imgs, f'data/mnase_10x100_cd_{time}.pkl')
 
 
 if __name__ == '__main__':
