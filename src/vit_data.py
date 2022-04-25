@@ -15,6 +15,7 @@ import torchvision.transforms as transforms
 
 from torchvision.transforms import Compose, Resize, ToTensor, ToPILImage
 from src.transformations import exhaustive_counts
+from src.utils import write_pickle
 
 
 def get_mnase_img(gene, gene_mnase, time, window, resize_size, len_span):
@@ -82,7 +83,7 @@ def main():
             
             for orf_name, orf in chrom_orfs.iterrows():
                 from src.vit_data import create_gene_image
-                img_t = create_gene_image(gene, chrom_mnase, time, img_size=img_size)
+                img_t = create_gene_image(orf, chrom_mnase, time, img_size=img_size)
                 imgs[i] = img_t
                 i += 1
                 
