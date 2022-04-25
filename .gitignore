@@ -1,0 +1,12 @@
+*.pyc
+.DS_Store
+output*
+.ipynb_checkpoints
+.Rhistory
+*.swp
+*.out
+*.ttf
+scratch_utils.py
+fimo
+data*
+results*
