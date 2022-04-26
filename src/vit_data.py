@@ -55,7 +55,6 @@ def create_gene_image(gene, mnase, window, len_span, img_size):
     return img_t
 
 
-
 def main():
 
     if len(sys.argv) < 2:
@@ -98,7 +97,7 @@ def main():
             
             timer.print_progress(i, len(orfs), conditional=(i % 100 == 0))
 
-    savepath = f'data/mnase_{img_size[0]}x{img_size[1]}_{filename}.pkl'
+    savepath = f'data/vit/vit_imgs_{filename}.pkl'
     save_tuple = ((f"img_size: {img_size}\n"
                    f"window: {window}\n"
                    f"lengths: {len_span}\n"
