@@ -41,7 +41,7 @@ def get_mnase_img(gene, gene_mnase, window, resize_size, len_span):
     return img, img_t
 
 
-def create_gene_image(gene, mnase, window=1000, len_span=(50, 200), img_size=(10, 100)):
+def create_gene_image(gene, mnase, window, len_span, img_size):
 
     from src.chromatin import filter_mnase
     from src.vit_data import get_mnase_img
@@ -71,11 +71,14 @@ def main():
     orfs = pd.read_csv('data/orfs_cd_paper_dataset.csv').set_index('orf_name')
 
     img_size = 10, 100
+    window = 1000
+    len_span = (50, 200)
 
     imgs = np.zeros((len(orfs), img_size[0], img_size[1]))
     i = 0
 
     print("Generating MNase images...")
+    saved_orfs = []
     for chrom in range(1, 17):
         timer.print_label(f"Chromosome {chrom}...")
         
@@ -83,15 +86,25 @@ def main():
         chrom_orfs = orfs[orfs.chr == chrom]
         
         for orf_name, orf in chrom_orfs.iterrows():
+
+            saved_orfs.append(orf_name)
             from src.vit_data import create_gene_image
-            img_t = create_gene_image(orf, chrom_mnase, img_size=img_size)
+
+            img_t = create_gene_image(orf, chrom_mnase, img_size=img_size,
+                window=window, len_span=len_span)
+
             imgs[i] = img_t
             i += 1
             
             timer.print_progress(i, len(orfs), conditional=(i % 100 == 0))
 
     savepath = f'data/mnase_{img_size[0]}x{img_size[1]}_{filename}.pkl'
-    write_pickle(imgs, savepath)
+    save_tuple = ((f"img_size: {img_size}\n"
+                   f"window: {window}\n"
+                   f"lengths: {len_span}\n"
+                   f"orfs: {saved_orfs}"), imgs)
+
+    write_pickle(save_tuple, savepath)
     print(f"Done. Wrote to {savepath}")
 
 
