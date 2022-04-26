@@ -50,7 +50,7 @@ def create_gene_image(gene, mnase, window=1000, len_span=(50, 200), img_size=(10
 
     span = gene.TSS-win_2, gene.TSS+win_2
     gene_mnase = filter_mnase(mnase, span[0], span[1], gene.chr, length_select=len_span)
-    img, img_t = get_mnase_img(gene, gene_mnase, time, window, img_size, len_span)
+    img, img_t = get_mnase_img(gene, gene_mnase, window, img_size, len_span)
 
     return img_t
 
@@ -61,18 +61,21 @@ def main():
     if len(sys.argv) < 2:
         raise ValueError("No BAM file specified")
 
+    timer = Timer()
+
     bam_file = sys.argv[1]
     filename = bam_file.split('/')[-1].split('.')[0]
 
-    mnase = read_mnase_bam(bam_file)
+    print("Reading BAM...")
+    mnase = read_mnase_bam(bam_file, timer=timer)
     orfs = pd.read_csv('data/orfs_cd_paper_dataset.csv').set_index('orf_name')
 
     img_size = 10, 100
-    timer = Timer()
 
     imgs = np.zeros((len(orfs), img_size[0], img_size[1]))
     i = 0
 
+    print("Generating MNase images...")
     for chrom in range(1, 17):
         timer.print_label(f"Chromosome {chrom}...")
         
@@ -87,7 +90,9 @@ def main():
             
             timer.print_progress(i, len(orfs), conditional=(i % 100 == 0))
 
-    write_pickle(imgs, f'data/mnase_{img_size[0]}x{img_size[1]}_{filename}.pkl')
+    savepath = f'data/mnase_{img_size[0]}x{img_size[1]}_{filename}.pkl'
+    write_pickle(imgs, savepath)
+    print(f"Done. Wrote to {savepath}")
 
 
 if __name__ == '__main__':
