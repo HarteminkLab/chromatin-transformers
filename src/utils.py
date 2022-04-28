@@ -96,3 +96,23 @@ def read_pickle(pickle_file_name):
         ret = pickle.load(file)
     return ret
 
+
+def normal_2d_kernel(yvar, xvar, ysize, xsize):
+
+    # from scipy.signal import convolve2d
+    import numpy as np
+    from scipy.stats import multivariate_normal
+
+    smooth_dist = multivariate_normal([0, 0], np.matrix([[xvar, 0], 
+        [0, yvar]]))
+
+    m = xsize
+    n = ysize
+
+    kernel = np.zeros((m, n))
+    for i in range(m):
+        for j in range(n):
+            kernel[i, j] = smooth_dist.pdf([[i - m//2, j - n//2]])
+
+    kernel = kernel / kernel.sum()
+    return kernel

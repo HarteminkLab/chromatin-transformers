@@ -14,13 +14,15 @@ import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
 
 from src.timer import Timer    
-from torchvision.transforms import Compose, Resize, ToTensor, ToPILImage
 from src.transformations import exhaustive_counts
 from src.utils import write_pickle
 from src.read_bam import read_mnase_bam
+from src.utils import normal_2d_kernel
 
 
 def get_mnase_img(gene, gene_mnase, window, resize_size, len_span):
+
+    from scipy.signal import convolve2d
 
     win_2 = window//2
     span = gene.TSS-win_2, gene.TSS+win_2
@@ -33,12 +35,11 @@ def get_mnase_img(gene, gene_mnase, window, resize_size, len_span):
     
     img = exhaustive_counts(cur_mnase, 
             (-win_2, win_2), len_span, x_key='mid', y_key='length')
+    kernel = normal_2d_kernel(5, 15, 20, 30)
+    smoothed = convolve2d(img, kernel, mode='same')
+    img_t = cv2.resize(smoothed, (resize_size[1], resize_size[0]))
     
-    transform = Compose([ToPILImage(), Resize(resize_size), ToTensor()])
-
-    img_t = transform(img.values.astype('float32').copy())[0]
-    
-    return img, img_t
+    return img, smoothed, img_t
 
 
 def create_gene_image(gene, mnase, window, len_span, img_size):
@@ -49,10 +50,10 @@ def create_gene_image(gene, mnase, window, len_span, img_size):
     win_2 = window//2
 
     span = gene.TSS-win_2, gene.TSS+win_2
-    gene_mnase = filter_mnase(mnase, span[0], span[1], gene.chr, length_select=len_span)
-    img, img_t = get_mnase_img(gene, gene_mnase, window, img_size, len_span)
+    gene_mnase = filter_mnase(mnase, span[0], span[1], gene.chr)
+    img, smoothed, img_t = get_mnase_img(gene, gene_mnase, window, img_size, len_span)
 
-    return img_t
+    return img, smoothed, img_t
 
 
 def main():
