@@ -15,7 +15,7 @@ declare -a BAMFILES=("/usr/xtmp/tqtran/data/cd/mnase/DM498_MNase_rep1_0_min.bam"
 
 i=0
 for BAM in ${BAMFILES[@]}; do
-    sbatch -D ./slurm-logs/ --job-name="vdat_$i" --export="PYFILE=src/vit_img_gen.py,ARGS=$BAM" scripts/cpu_job.sh
+    echo sbatch -D ./slurm-logs/ --job-name="vdat_$i" --export="PYFILE=src/vit_img_gen.py,ARGS=$BAM" scripts/cpu_job.sh
     ((i=i+1))
 done
 

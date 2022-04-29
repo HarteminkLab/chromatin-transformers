@@ -177,14 +177,15 @@ def main():
     # Intermediate fragments: 80-129
     # Nucleosomal fragments: 130-200
     len_cuts = [30, 80, 130, 201]
-    window = 1024
 
-    # Window = 1024
-    # Resize = 64   (16 downscale)
-    # Patch size = 4
+    # window = 1024 bp
+    # resize width = 64 pixels (x16 downscale)
+    # patch width = 4 pixels
+
     # 64 / 4 = 16 column patches
-    # 1024 / 16 = 64 bps per patch
+    # 1024 / 16 = 64 bp per patch
     # 12x64 shaped images
+    window = 1024
     patch_size = 4
     sublength_resize_height = patch_size # times 3 vertical patches of height
     img_height = patch_size*(len(len_cuts)-1)
@@ -216,7 +217,7 @@ def main():
             timer.print_progress(i, len(orfs), conditional=(i % 100 == 0))
 
     savepath = f'data/vit/vit_imgs_{filename}.pkl'
-    save_tuple = ((f"img size: {img_size}\n"
+    save_tuple = ((f"img size: {img_height}x{img_width}\n"
                    f"window: {window}\n"
                    f"length cuts: {len_cuts}\n"
                    f"patch size: {patch_size}\n"
