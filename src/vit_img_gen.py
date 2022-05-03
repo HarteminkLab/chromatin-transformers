@@ -77,17 +77,19 @@ class ViTImgGen:
         len_cuts = self.len_cuts
 
         def plot_len_cuts():
-            for x in len_cuts:
-                plt.axhline(x, lw=1, c='gray')
+            for y in len_cuts:
+                plt.axhline(y, lw=1, c='gray', linestyle='dotted')
+            plt.yticks(len_cuts)
 
         def plot_len_cuts_scaled():
             for y in np.arange(0, self.sublength_resize_height*(len(len_cuts)-1),
                 self.sublength_resize_height):
-                plt.axhline(y, lw=1, c='gray')
+                plt.axhline(y, lw=1, c='gray', linestyle='dotted')
 
         def plot_xpatches():
             for x in np.arange(-win_2, win_2, self.patch_width_bp):
-                plt.axvline(x, lw=1, c='gray')
+                plt.axvline(x, lw=1, c='gray', linestyle='dotted')
+            plt.axvline(0, c='black', lw=1)
 
         def plot_img(img, extent=[-win_2, win_2, 0, 225]):
             plt.imshow(img, cmap='magma_r', vmax=0.25, origin='lower', 
@@ -193,7 +195,6 @@ def main():
 
     vit_gen = ViTImgGen(mnase, window, sublength_resize_height, len_cuts,
                         img_width, patch_size)
-
     imgs = np.zeros((len(orfs), img_height, img_width))
     i = 0
 
@@ -208,7 +209,6 @@ def main():
         for orf_name, orf in chrom_orfs.iterrows():
 
             saved_orfs.append(orf_name)
-
             img, img_t, smoothed, img_slices = vit_gen.get_mnase_img(orf)
 
             imgs[i] = img_t
@@ -216,15 +216,17 @@ def main():
             
             timer.print_progress(i, len(orfs), conditional=(i % 100 == 0))
 
+    desc_dict = {"img_size" : (img_height, img_width),
+                 "window": window,
+                 "length_cuts" : len_cuts,
+                 "patch_size" : patch_size,
+                 "img_height" : img_height,
+                 "img_width" : img_width,
+                 "lengths": len_span,
+                 "orfs": saved_orfs}
+
     savepath = f'data/vit/vit_imgs_{filename}.pkl'
-    save_tuple = ((f"img size: {img_height}x{img_width}\n"
-                   f"window: {window}\n"
-                   f"length cuts: {len_cuts}\n"
-                   f"patch size: {patch_size}\n"
-                   f"img height: {img_height}\n"
-                   f"img width: {img_width}\n"
-                   f"lengths: {len_span}\n"
-                   f"orfs: {saved_orfs}"), imgs)
+    save_tuple = ((desc_dict, imgs)
 
     write_pickle(save_tuple, savepath)
     print(f"Done. Wrote to {savepath}")
