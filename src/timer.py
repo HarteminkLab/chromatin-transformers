@@ -26,10 +26,10 @@ class Timer:
         indentspace = ' ' * indent
         print_fl("%s%s" % (indentspace, self.get_time()))
 
-    def print_label(self, label, indent=0, conditional=True):
+    def print_label(self, label, indent=0, conditional=True, end='\n'):
         if conditional:
             indentspace = ' ' * indent
-            print_fl("%s%s - %s" % (indentspace, label, self.get_time()))
+            print_fl("%s%s - %s" % (indentspace, label, self.get_time()), end=end)
 
     def print_progress(self, i, total, indent=0, conditional=True):
         self.print_label(f"{i}/{total}", indent=indent, conditional=conditional)

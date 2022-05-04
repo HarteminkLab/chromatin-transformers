@@ -1,8 +1,10 @@
 
+import os
 import pysam
+
 import pandas as pd
 from src.utils import run_cmd, print_fl
-import os
+
 
 def read_mnase_bam(filename, sample=None, timer=None):
     """
@@ -12,11 +14,13 @@ def read_mnase_bam(filename, sample=None, timer=None):
     samfile = pysam.AlignmentFile(filename, "rb")
 
     count = 0
-    data = {'start':[], 'length': [], 'stop': [], 'mid': [], 'chr': [], 'sample': []}
+    data = {'start':[], 'length': [], 'stop': [],
+            'mid': [], 'chr': [], 'sample': []}
 
     for chrom in range(1, 17):
 
-        timer.print_label(f"Chromosome {chrom}")
+        if timer is not None:
+            timer.print_label(f"Chromosome {chrom}")
 
         # get chromosome reads
         try:
@@ -74,16 +78,17 @@ def _fromRoman(roman):
         return -1
 
 
-def read_rna_seq(filename, time, debug=False):
+def read_rna_seq(filename, sample=None, timer=None):
     """Load an individual RNA-seq file and return a dataframe"""
 
     samfile = pysam.AlignmentFile(filename, "rb")
 
     data = {'start':[], 'strand': [], 'length': [],
-            'chr': [], 'stop': [], 'time': []}
+            'chr': [], 'stop': [], 'sample': []}
     for chrom in range(1, 17):
 
-        if debug and chrom not in DEBUG_CHROMS: continue
+        if timer is not None:
+            timer.print_label(f"Chromosome {chrom}")
 
         # get chromosome reads
         try:
@@ -104,7 +109,7 @@ def read_rna_seq(filename, time, debug=False):
             data['start'].append(position)
             data['strand'].append(strand)
             data['chr'].append(chrom)
-            data['time'].append(time)
+            data['sample'].append(sample)
             data['length'].append(length)
             data['stop'].append(position + length) # inclusive stop nucleotide
 
