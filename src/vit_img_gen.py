@@ -215,13 +215,13 @@ def main():
             
             timer.print_progress(i, len(orfs), conditional=(i % 100 == 0))
 
-    desc_dict = {"img_size" : (img_height, img_width),
+    desc_dict = {"img_size": (img_height, img_width),
                  "window": window,
-                 "length_cuts" : len_cuts,
-                 "patch_size" : patch_size,
-                 "img_height" : img_height,
-                 "img_width" : img_width,
-                 "lengths": len_span,
+                 "length_cuts": len_cuts,
+                 "patch_size": patch_size,
+                 "img_height": img_height,
+                 "img_width": img_width,
+                 "lengths": vit_gen.len_span,
                  "orfs": saved_orfs}
 
     savepath = f'data/vit/vit_imgs_{filename}.pkl'
