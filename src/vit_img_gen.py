@@ -210,7 +210,6 @@ def main():
 
             saved_orfs.append(orf_name)
             img, img_t, smoothed, img_slices = vit_gen.get_mnase_img(orf)
-
             imgs[i] = img_t
             i += 1
             
@@ -226,7 +225,7 @@ def main():
                  "orfs": saved_orfs}
 
     savepath = f'data/vit/vit_imgs_{filename}.pkl'
-    save_tuple = ((desc_dict, imgs)
+    save_tuple = (desc_dict, imgs)
 
     write_pickle(save_tuple, savepath)
     print(f"Done. Wrote to {savepath}")
