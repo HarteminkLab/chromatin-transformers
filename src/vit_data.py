@@ -8,7 +8,13 @@ import numpy as np
 from src.utils import read_pickle
 
 
-def load_cd_data():
+def load_rna_data():
+    TPM_path = 'data/vit/cd_rna_seq_TPM.csv'
+    TPM = pd.read_csv(TPM_path).set_index("orf_name")
+    return TPM
+
+
+def load_cd_img_data():
 
     pickle_paths = ('data/vit/vit_imgs_DM498_MNase_rep1_0_min.pkl',
                     'data/vit/vit_imgs_DM499_MNase_rep1_7.5_min.pkl',

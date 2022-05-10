@@ -200,6 +200,7 @@ def main():
 
     print("Generating MNase images...")
     saved_orfs = []
+    chroms = []
     for chrom in range(1, 17):
         timer.print_label(f"Chromosome {chrom}...")
         
@@ -209,6 +210,7 @@ def main():
         for orf_name, orf in chrom_orfs.iterrows():
 
             saved_orfs.append(orf_name)
+            chroms.append(chrom)
             img, img_t, smoothed, img_slices = vit_gen.get_mnase_img(orf)
             imgs[i] = img_t
             i += 1
@@ -221,6 +223,7 @@ def main():
                  "patch_size": patch_size,
                  "img_height": img_height,
                  "img_width": img_width,
+                 "chrs": chroms,
                  "lengths": vit_gen.len_span,
                  "orfs": saved_orfs}
 

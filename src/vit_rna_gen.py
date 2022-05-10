@@ -13,17 +13,16 @@ from src.timer import Timer
 from src.transcription import convert_to_TPM, calculate_read_counts
 
 
-def convert_read_counts_TPM(read_counts_rep, times):
+def convert_read_counts_TPM(read_counts_rep, orfs, times):
 
     TPMs = read_counts_rep[[]].copy()
     for time in times:
-        TPMs.loc[:, time] = convert_to_TPM(read_counts_rep[time], orf['length'])
+        TPMs.loc[:, time] = convert_to_TPM(read_counts_rep[time], orfs['length'])
     return TPMs
 
 
-def compute_replicate_read_counts(rna_bam_files, timer):
+def compute_replicate_read_counts(rna_bam_files, orfs, timer):
 
-    orfs = pd.read_csv('data/orfs_cd_paper_dataset.csv').set_index('orf_name')
     read_counts = orfs[[]].copy()
 
     for time, bam_path in rna_bam_files:
@@ -60,13 +59,15 @@ def gen_rna():
 
     timer = Timer()
 
-    rep1_read_counts = compute_replicate_read_counts(rna_bam_files_rep1, timer)
-    rep2_read_counts = compute_replicate_read_counts(rna_bam_files_rep2, timer)
+    orfs = pd.read_csv('data/orfs_cd_paper_dataset.csv').set_index('orf_name')
+
+    rep1_read_counts = compute_replicate_read_counts(rna_bam_files_rep1, orfs, timer)
+    rep2_read_counts = compute_replicate_read_counts(rna_bam_files_rep2, orfs, timer)
 
     times = [0.0, 7.5, 15, 30, 60, 120]
     combined_read_counts = pd.concat([rep1_read_counts, rep2_read_counts]).groupby('orf_name').sum()
 
-    TPM_values = convert_read_counts_TPM(combined_read_counts, times)
+    TPM_values = convert_read_counts_TPM(combined_read_counts, orfs, times)
 
     save_path = 'data/vit/cd_rna_read_counts.csv'
     combined_read_counts.to_csv(save_path)
