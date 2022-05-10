@@ -99,7 +99,7 @@ def calculate_read_counts(orfs, rna_seq, sample_key='count'):
     return read_counts
 
 
-def convert_to_TPM(data, read_count_key, len_key):
+def convert_to_TPM(data, lengths):
     """Convert to TPM, normalize by length of ORF, then divide 
     by sum of each time, multiply by 1 mil so each time point 
     sums to 1e6"""
@@ -107,9 +107,10 @@ def convert_to_TPM(data, read_count_key, len_key):
     data = data.copy()
 
     # normalize by ORF length
-    data['read_per_bp'] = data[read_count_key] / data[len_key]
+    data['read_per_bp'] = data / lengths
 
     scaling = data['read_per_bp'].sum()
     
     TPM = (data['read_per_bp'] / scaling * 1e6) # scale to 1 million
     return TPM
+

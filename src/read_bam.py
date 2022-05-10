@@ -115,4 +115,5 @@ def read_rna_seq(filename, sample=None, timer=None):
 
     samfile.close()
     df = pd.DataFrame(data=data)
+
     return df
