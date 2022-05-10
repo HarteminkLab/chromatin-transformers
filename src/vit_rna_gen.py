@@ -1,10 +1,21 @@
 
+import sys
+sys.path.append('.')
+
+import pandas as pd
+import numpy as np
+
+from src.timer import Timer    
+from src.utils import write_pickle
+from src.read_bam import read_rna_seq
+
 from src.timer import Timer
-from src.transcription import convert_to_TPM
+from src.transcription import convert_to_TPM, calculate_read_counts
 
 
 def convert_read_counts_TPM(read_counts_rep, times):
-    TPMs = orfs[[]].copy()
+
+    TPMs = read_counts_rep[[]].copy()
     for time in times:
         TPMs.loc[:, time] = convert_to_TPM(read_counts_rep[time], orf['length'])
     return TPMs
@@ -12,7 +23,9 @@ def convert_read_counts_TPM(read_counts_rep, times):
 
 def compute_replicate_read_counts(rna_bam_files, timer):
 
+    orfs = pd.read_csv('data/orfs_cd_paper_dataset.csv').set_index('orf_name')
     read_counts = orfs[[]].copy()
+
     for time, bam_path in rna_bam_files:
         timer.print_label(f"{time}, reading BAM", end='...')
         rna_seq = read_rna_seq(bam_path, time)
@@ -26,7 +39,10 @@ def compute_replicate_read_counts(rna_bam_files, timer):
 
 def gen_rna():
 
-    parent_dir = '/Users/trung/Research/data/bam/cd/rna/'
+    if len(sys.argv) < 2:
+        raise ValueError("No BAM direcotry specified")
+
+    parent_dir = sys.argv[1]
 
     rna_bam_files_rep1 = [(0.0, f'{parent_dir}/DM538_RNA_rep1_0_min.bam'),
                           (7.5, f'{parent_dir}/DM539_RNA_rep1_7.5_min.bam'),
