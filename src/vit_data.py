@@ -2,40 +2,52 @@
 import sys
 sys.path.append('.')
 
-
 import pandas as pd
 import numpy as np
+
 from src.utils import read_pickle
+from torch.utils.data import Dataset
+from src.reference_data import read_orfs_data
 
 
-def load_rna_data():
-    TPM_path = 'data/vit/cd_rna_seq_TPM.csv'
-    TPM = pd.read_csv(TPM_path).set_index("orf_name")
-    return TPM
+class ViTData(Dataset):
+
+    def __init__(self, all_imgs, orfs, chrs, times, TPM):
+        (self.all_imgs, self.orfs, self.chrs, self.times, 
+         self.TPM) = all_imgs, orfs, chrs, times, TPM
+
+    def __len__(self):
+        return len(self.all_imgs)
+
+    def __getitem__(self, idx):
+        return self.all_imgs[idx], self.TPM[idx], self.orfs[idx], self.chrs[idx], self.times[idx]
 
 
-def load_cd_img_data():
+def load_cd_data():
 
     pickle_paths = ('data/vit/vit_imgs_DM498_MNase_rep1_0_min.pkl',
                     'data/vit/vit_imgs_DM499_MNase_rep1_7.5_min.pkl',
                     'data/vit/vit_imgs_DM500_MNase_rep1_15_min.pkl',
                     'data/vit/vit_imgs_DM501_MNase_rep1_30_min.pkl',
                     'data/vit/vit_imgs_DM502_MNase_rep1_60_min.pkl',
-                    'data/vit/vit_imgs_DM503_MNase_rep1_120_min.pkl',
+                    'data/vit/vit_imgs_DM503_MNase_rep1_120_min.pkl'
+                    )
+                    # 'data/vit/vit_imgs_DM504_MNase_rep2_0_min.pkl',
+                    # 'data/vit/vit_imgs_DM505_MNase_rep2_7.5_min.pkl',
+                    # 'data/vit/vit_imgs_DM506_MNase_rep2_15_min.pkl',
+                    # 'data/vit/vit_imgs_DM507_MNase_rep2_30_min.pkl',
+                    # 'data/vit/vit_imgs_DM508_MNase_rep2_60_min.pkl',
+                    # 'data/vit/vit_imgs_DM509_MNase_rep2_120_min.pkl')
 
-                    'data/vit/vit_imgs_DM504_MNase_rep2_0_min.pkl',
-                    'data/vit/vit_imgs_DM505_MNase_rep2_7.5_min.pkl',
-                    'data/vit/vit_imgs_DM506_MNase_rep2_15_min.pkl',
-                    'data/vit/vit_imgs_DM507_MNase_rep2_30_min.pkl',
-                    'data/vit/vit_imgs_DM508_MNase_rep2_60_min.pkl',
-                    'data/vit/vit_imgs_DM509_MNase_rep2_120_min.pkl')
+    TPM_path = 'data/vit/cd_rna_seq_TPM.csv'
 
     i = 0
     df = pd.DataFrame()
     times = np.array([])
     orfs = np.array([])
-
+    chrs = np.array([])
     all_imgs = None
+
     for path in pickle_paths:        
         filesplit = path.split('/')[-1].split('_')[2:]
         dm, rep, time = filesplit[0], filesplit[2], filesplit[3]
@@ -44,9 +56,10 @@ def load_cd_img_data():
         if all_imgs is None: all_imgs = imgs
         else:
             all_imgs = np.concatenate([all_imgs, imgs])
-        
+
         times = np.append(times, np.repeat(float(time), len(imgs)))
         orfs = np.append(orfs, np.array(desc['orfs']))
+        chrs = np.append(chrs, np.array(desc['chrs']))
         
         df.loc[i, 'DM'] = dm
         df.loc[i, 'replicate'] = rep
@@ -54,7 +67,18 @@ def load_cd_img_data():
         df.loc[i, 'path'] = path
         i += 1
 
-    return df, all_imgs, orfs, times
+    # Add channel dimension
+    all_imgs = all_imgs.reshape(all_imgs.shape[0], 1, all_imgs.shape[1], all_imgs.shape[2])
+    
+    tpm_df = read_orfs_data(TPM_path)
+    tpm_df = tpm_df.unstack().reset_index().rename(columns={'level_0': 'time', 0: 'TPM'})
+    orfs_times = list(zip(orfs, times))
+    tpm_df = tpm_df.set_index(['orf_name', 'time']).loc[orfs_times]
+    TPM = tpm_df.TPM.values
+
+    vit_data = ViTData(all_imgs, orfs, chrs, times, TPM)
+
+    return vit_data
 
 
 if __name__ == '__main__':

@@ -52,6 +52,7 @@ class PatchEmbedding(nn.Module):
         self.positions = nn.Parameter(torch.randn(num_params, emb_size))
 
     def forward(self, x, **kwargs):
+
         b, _, _, _ = x.shape
 
         x = self.patches(x)
@@ -212,35 +213,47 @@ class ClassificationHead(nn.Sequential):
 
 
 class ViT(nn.Module):
-    def __init__(self,     
-                in_channels: int,
-                img_size: (int, int),
-                patch_size: int,
-                emb_size: int,
-                num_heads: int = 8,
-                transformer_depth: int = 12,
-                forward_expansion: int = 4,
-                att_drop_p: float = 0.,
-                forward_drop_p: float = 0.,
-                n_classes: int = 1,
-                **kwargs):
+    def __init__(self, config, **kwargs):
         super().__init__()
 
-        self.in_channels = in_channels
-        self.patches = PatchEmbedding(in_channels=in_channels,
-            patch_size=patch_size, 
-            img_size=img_size, 
-            emb_size=emb_size)
-        self.encoder = TransformerEncoder(emb_size=emb_size, 
-                                          num_heads=num_heads,
-                                          transformer_depth=transformer_depth, 
-                                          forward_expansion=forward_expansion,
-                                          att_drop_p=att_drop_p,
-                                          forward_drop_p=forward_drop_p,
-                                           **kwargs)
-        self.head = ClassificationHead(emb_size, n_classes)
-        self.config = None
+        self.n_classes = config.NUM_CLASSES
+        self.in_channels = config.IN_CHANNELS
+        self.img_size = config.IMG_SIZE
+        self.patch_size = config.PATCH_SIZE
+        self.emb_size = config.EMB_SIZE
+        self.num_heads = config.NUM_HEADS
+        self.transformer_depth = config.DEPTH
+        self.forward_expansion = config.FORWARD_EXPANSION
+        self.att_drop_p = config.DROPOUT
+        self.forward_drop_p = config.DROPOUT
 
+        self.patches = PatchEmbedding(in_channels=self.in_channels,
+            patch_size=self.patch_size, 
+            img_size=self.img_size, 
+            emb_size=self.emb_size)
+        self.encoder = TransformerEncoder(emb_size=self.emb_size, 
+                                          num_heads=self.num_heads,
+                                          transformer_depth=self.transformer_depth, 
+                                          forward_expansion=self.forward_expansion,
+                                          att_drop_p=self.att_drop_p,
+                                          forward_drop_p=self.forward_drop_p,
+                                           **kwargs)
+        self.head = ClassificationHead(self.emb_size, self.n_classes)
+        self.config = config
+
+
+    def config_repr(self):
+
+        return (f"n_classes: {self.n_classes}\n"
+                f"in_channels: {self.in_channels}\n"
+                f"img_size: {self.img_size}\n"
+                f"patch_size: {self.patch_size}\n"
+                f"emb_size: {self.emb_size}\n"
+                f"num_heads: {self.num_heads}\n"
+                f"transformer_depth: {self.transformer_depth}\n"
+                f"forward_expansion: {self.forward_expansion}\n"
+                f"att_drop_p: {self.att_drop_p}\n"
+                f"forward_drop_p: {self.forward_drop_p}\n")
 
     def forward(self, x, **kwargs):
         x = self.patches(x)
