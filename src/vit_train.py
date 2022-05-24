@@ -148,8 +148,6 @@ class ViTTrainer:
 
                 optimizer.step()
 
-                if np.isnan(loss.detach().item()): break
-
                 running_loss += loss.item()
 
             train_loss = (running_loss / len(trainloader))
@@ -201,8 +199,6 @@ class ViTTrainer:
             if train_loss < self.stoploss_value:
                 print_fl(f"[{epoch}] Stop loss reached: {train_loss} < {self.stoploss_value}. Ending early.")
                 break
-
-            break
 
         print_fl(f'Finished Training {timer.get_time()}')
 
