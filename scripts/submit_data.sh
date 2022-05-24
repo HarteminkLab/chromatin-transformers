@@ -20,4 +20,5 @@ for BAM in ${BAMFILES[@]}; do
 done
 
 RNA_DIR="/usr/xtmp/tqtran/data/cd/rna/"
-sbatch -D ./slurm-logs/ --job-name="vrna_$i" --export="PYFILE=src/vit_rna_gen.py,ARGS=$RNA_DIR" scripts/cpu_job.sh
+#sbatch -D ./slurm-logs/ --job-name="vrna_$i" --export="PYFILE=src/vit_rna_gen.py,ARGS=$RNA_DIR" scripts/cpu_job.sh
+

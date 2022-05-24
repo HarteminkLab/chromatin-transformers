@@ -149,8 +149,7 @@ class ViTTrainer:
 
             if epoch % 10 == 0:
 
-                validation_loss = compute_validation_loss(vit, validationloader,
-                    criterion, device)
+                validation_loss = self.compute_validation_loss(validationloader)
 
                 perturb_str = "* Saddle conditions met! Perturbing model weights *" if is_perturb else ""
                 print_fl('[%d] train loss: %.5f, validation loss %.5f, %s %s' %
@@ -198,20 +197,23 @@ class ViTTrainer:
 
         print_fl(f'Finished Training {timer.get_time()}')
 
-    def compute_validation_loss(self, device=torch.device('cpu'), 
-        num_batches=-1):
+    def compute_validation_loss(self, dataloader, num_batches=-1):
+
+        device = self.device
+        vit = self.vit
         
         with torch.no_grad():
 
             i = 0
             running_loss = 0
-            for data in self.dataloader.testloader:
-                images, tx = data
+            for data in dataloader:
+                images, tx, _, _, _ = data
                 images = images.to(device)
                 tx = tx.to(device)
 
                 # calculate outputs by running images through the network
-                outputs, weights = vit(images)
+                outputs, weights = vit(images.float().to(device))
+
                 outputs = outputs.to(device)
                 loss = self.criterion(outputs, tx.reshape(outputs.shape))
                 running_loss += loss.item()
