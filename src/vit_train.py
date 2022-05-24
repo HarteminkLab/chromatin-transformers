@@ -84,9 +84,12 @@ class ViTTrainer:
         random_hash = uuid.uuid4().hex[0:4]
 
         self.out_dir = f"{config.OUT_DIR}_{today_str}_{random_hash}"
+        self.model_path = f"{self.out_dir}/model.torch"
 
-        loss_path = f"{self.out_dir}/loss.csv"
-        loss_fig_path = f"{self.out_dir}/loss.png"
+        mkdir_safe(self.out_dir)
+
+        self.loss_path = f"{self.out_dir}/loss.csv"
+        self.loss_fig_path = f"{self.out_dir}/loss.png"
 
 
     def train(self):
@@ -102,6 +105,8 @@ class ViTTrainer:
         testloader = self.dataloader.testloader
         timer = self.timer
         config = self.config
+        model_path = self.model_path
+        last_k_perturb = self.last_k_perturb
 
         for epoch in self.epochs_to_run:
 
@@ -132,7 +137,7 @@ class ViTTrainer:
                         # If the last 30 epochs do not differ by the threshold and
                         # we're above the loss limit, we may be in a saddle point.
                         # Perturb the weights of the model
-                        if ((last_k_diff < loss_threshold) and
+                        if ((last_k_diff < self.loss_threshold) and
                             (loss.item() > config.PERTURBATION_LOSS_LIM)):
 
                             is_perturb = True
@@ -171,16 +176,16 @@ class ViTTrainer:
                         'validation_loss': validation_losses
                     })
 
-                loss_df.to_csv(loss_path, index=False)
+                loss_df.to_csv(self.loss_path, index=False)
 
                 # Plot loss
                 fig = plot_loss_progress(loss_df, m=50)
-                plt.savefig(loss_fig_path, dpi=150)
+                plt.savefig(self.loss_fig_path, dpi=150)
                 plt.close(fig)
                 plt.cla()
                 plt.clf()
 
-                if epoch % 100 == 0 :
+                if False:#epoch % 100 == 0 :
 
                     # Plot accuracy
                     fig, train_r2, valid_r2, test_r2 = plot_predictions(vit, vit_data, trainloader, validationloader, 
@@ -248,13 +253,40 @@ def load_model_dir(model_dir):
     vit.load_state_dict(torch.load(f"{model_dir}/model.torch", map_location=torch.device('cpu')))
     return vit, config
 
+def plot_loss_progress(loss_df, m):
+
+    def _get_ylim(data):
+        data_min = data.min()
+        data_max = data.max()
+        data_span = data_max-data_min
+        return data_min-data_span*0.5, data_max+data_span*0.5
+
+    fig = plt.figure(figsize=(14, 3))
+    fig.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
+    plt.subplots_adjust(hspace=0.5, wspace=0.3)
+
+    plt.subplot(1, 3, 1)
+    plt.plot(loss_df.epoch, loss_df.train_loss, label='Training loss')
+    plt.plot(loss_df.epoch, loss_df.validation_loss, label='Validation loss')
+    plt.legend()
+
+    plt.subplot(1, 3, 2)
+    plt.plot(loss_df.epoch[-m:], loss_df.train_loss[-m:], label='Training loss')
+    plt.title(f"Training loss, {loss_df.train_loss.values[-1]:.8f}")
+    
+    plt.subplot(1, 3, 3)
+    plt.plot(loss_df.epoch[-m:], loss_df.validation_loss[-m:], label='Validation loss',
+        c=plt.get_cmap('tab10')(1))
+    
+    plt.title(f"Validation loss, {loss_df.validation_loss.values[-1]:.8f}")
+    return fig
+
 
 def main():
 
     # Load config from command-line
     config_name = sys.argv[1]
     config = importlib.import_module(f"config.{config_name}")
-    model_path = config_name
 
     # Load ViT model from config
     vit = load_model_config(config)
