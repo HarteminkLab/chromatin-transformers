@@ -122,7 +122,7 @@ class ViTTrainer:
 
                 # forward + backward + optimize
                 outputs, weights = vit(images.float().to(device))
-                loss = self.criterion(outputs.float(), tx.reshape(outputs.shape).float().to(device))
+                loss = self.criterion(outputs.double(), tx.reshape(outputs.shape).to(device))
                 loss.backward()
 
                 # Apply perturbation to weights to knock out of saddle points
@@ -147,6 +147,8 @@ class ViTTrainer:
                                     param += torch.tensor(perturb).to(device)
 
                 optimizer.step()
+
+                if np.isnan(loss.detach().item()): break
 
                 running_loss += loss.item()
 
@@ -200,7 +202,10 @@ class ViTTrainer:
                 print_fl(f"[{epoch}] Stop loss reached: {train_loss} < {self.stoploss_value}. Ending early.")
                 break
 
+            break
+
         print_fl(f'Finished Training {timer.get_time()}')
+
 
     def compute_validation_loss(self, dataloader, num_batches=-1):
 
@@ -252,6 +257,7 @@ def load_model_dir(model_dir):
     vit = load_model_config(config)
     vit.load_state_dict(torch.load(f"{model_dir}/model.torch", map_location=torch.device('cpu')))
     return vit, config
+
 
 def plot_loss_progress(loss_df, m):
 

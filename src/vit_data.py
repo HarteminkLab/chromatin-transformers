@@ -8,6 +8,9 @@ import numpy as np
 from src.utils import read_pickle
 from torch.utils.data import Dataset
 from src.reference_data import read_orfs_data
+import torchvision.transforms as transforms
+import torch
+from sklearn.preprocessing import scale
 
 
 class ViTData(Dataset):
@@ -15,6 +18,14 @@ class ViTData(Dataset):
     def __init__(self, all_imgs, orfs, chrs, times, TPM):
         (self.all_imgs, self.orfs, self.chrs, self.times, 
          self.TPM) = all_imgs, orfs, chrs, times, TPM
+
+        img_transform = transforms.Normalize((0.5), (0.5), (0.5))
+
+        self.unscaled_TPM = TPM
+        self.TPM = scale(self.TPM.astype('float')).astype('float')
+        self.original_imgs = self.all_imgs.copy()
+        self.all_imgs = img_transform(torch.tensor(self.all_imgs))
+    
 
     def __len__(self):
         return len(self.all_imgs)
