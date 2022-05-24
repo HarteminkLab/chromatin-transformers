@@ -8,5 +8,5 @@ output*
 *.ttf
 scratch_utils.py
 fimo
-data*
+data/*
 results*
