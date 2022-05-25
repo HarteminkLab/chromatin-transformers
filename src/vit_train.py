@@ -30,13 +30,14 @@ from sklearn.metrics import r2_score
 
 class ViTTrainer:
 
-    def __init__(self, vit, dataloader):
+    def __init__(self, vit, dataloader, resume=False, resume_path=None):
         super().__init__()
 
         self.vit = vit
         self.dataloader = dataloader
         self.criterion = nn.MSELoss()
-        self.resume_path = None
+        self.resume = resume
+        self.resume_path = resume_path
         self.config = vit.config
 
         num_batches = len(dataloader.trainloader)
@@ -56,16 +57,9 @@ class ViTTrainer:
         self.stoploss_value = 1e-5
         self.lr = 0.001
         self.momentum = 0.9
-
-
-        last_epoch = 0
         self.epochs = 100000
-        self.epochs_to_run = np.arange(last_epoch+1, last_epoch+self.epochs)
 
     def setup(self):
-    
-        # print_fl(f"Starting training, {epochs} epochs with {num_batches} "
-        #              f"batches of size {config.BATCH_SIZE}...")
 
         self.timer = Timer()
 
@@ -76,19 +70,35 @@ class ViTTrainer:
         self.optimizer = optim.SGD(vit.parameters(), lr=self.lr, momentum=self.momentum)
 
         # Track progress
-        self.epochs_arr = []
-        self.validation_losses = []
-        self.train_losses = []
+        if not self.resume:
+            self.epochs_arr = []
+            self.validation_losses = []
+            self.train_losses = []
+            last_epoch = 0
+        else:
+            losses_df = pd.read_csv(f"{self.resume_path}/loss.csv")
+            self.epochs_arr = list(losses_df['epoch'].values)
+            self.train_losses = list(losses_df['train_loss'].values)
+            self.validation_losses = list(losses_df['validation_loss'].values)
+            last_epoch = self.epochs_arr[-1]
 
-        today = date.today()
-        today_str = today.strftime("%Y%m%d")
-        random_hash = uuid.uuid4().hex[0:4]
+        if not self.resume:
+            today = date.today()
+            today_str = today.strftime("%Y%m%d")
+            random_hash = uuid.uuid4().hex[0:4]
 
-        self.out_dir = f"{config.OUT_DIR}_{today_str}_{random_hash}"
+            self.out_dir = f"{config.OUT_DIR}_{today_str}_{random_hash}"
+            mkdir_safe(self.out_dir)
+            shutil.copyfile(f"config/{config_name}.py", f"{out_dir}/config.py")
+            last_epoch = 0
+        else:
+            self.out_dir = self.resume_path
+            vit.load_state_dict(torch.load(f'{self.resume_path}/model.torch',
+                map_location=torch.device('cpu')))
+            print_fl(f"Resuming from {last_epoch}...")
+
+        self.epochs_to_run = np.arange(last_epoch+1, last_epoch+self.epochs)
         self.model_path = f"{self.out_dir}/model.torch"
-
-        mkdir_safe(self.out_dir)
-
         self.loss_path = f"{self.out_dir}/loss.csv"
         self.loss_fig_path = f"{self.out_dir}/loss.png"
 
@@ -180,6 +190,7 @@ class ViTTrainer:
                         'train_loss': train_losses,
                         'validation_loss': validation_losses
                     })
+                self.loss_df = loss_df
 
                 loss_df.to_csv(self.loss_path, index=False)
 
@@ -334,11 +345,17 @@ def plot_loss_progress(loss_df, m):
 def main():
 
     # Load config from command-line
-    config_name = sys.argv[1]
-    config = importlib.import_module(f"config.{config_name}")
+    if len(sys.argv) == 3:
+        assert sys.argv[1] == 'resume'
+        resume_path = sys.argv[2]
+        resume = True
+        vit, config = load_model_dir(resume_path)
 
-    # Load ViT model from config
-    vit = load_model_config(config)
+    elif len(sys.argv) == 2:
+        config_name = sys.argv[1]
+        config = importlib.import_module(f"config.{config_name}")
+        vit = load_model_config(config)
+
     print_fl(f"Config: {vit.config_repr()}")
 
     # Data loading
@@ -351,13 +368,14 @@ def main():
 
     # Initialize trainer
     print_fl("Initializing trainer...")
-    trainer = ViTTrainer(vit, dataloader)
+    trainer = ViTTrainer(vit, dataloader, resume=resume, resume_path=resume_path)
     trainer.setup()
     print_fl(f"Writing to {trainer.out_dir}")
 
     # Train
     print_fl("Training...")
     trainer.train() 
+
 
 if __name__ == '__main__':
     main()
