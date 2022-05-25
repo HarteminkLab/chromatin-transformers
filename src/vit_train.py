@@ -30,7 +30,7 @@ from sklearn.metrics import r2_score
 
 class ViTTrainer:
 
-    def __init__(self, vit, dataloader, resume=False, resume_path=None):
+    def __init__(self, vit, config_name, dataloader, resume=False, resume_path=None):
         super().__init__()
 
         self.vit = vit
@@ -39,6 +39,7 @@ class ViTTrainer:
         self.resume = resume
         self.resume_path = resume_path
         self.config = vit.config
+        self.config_name = config_name
 
         num_batches = len(dataloader.trainloader)
 
@@ -89,7 +90,7 @@ class ViTTrainer:
 
             self.out_dir = f"{config.OUT_DIR}_{today_str}_{random_hash}"
             mkdir_safe(self.out_dir)
-            shutil.copyfile(f"config/{config_name}.py", f"{out_dir}/config.py")
+            shutil.copyfile(f"config/{self.config_name}.py", f"{self.out_dir}/config.py")
             last_epoch = 0
         else:
             self.out_dir = self.resume_path
@@ -368,7 +369,7 @@ def main():
 
     # Initialize trainer
     print_fl("Initializing trainer...")
-    trainer = ViTTrainer(vit, dataloader, resume=resume, resume_path=resume_path)
+    trainer = ViTTrainer(vit, config_name, dataloader, resume=resume, resume_path=resume_path)
     trainer.setup()
     print_fl(f"Writing to {trainer.out_dir}")
 

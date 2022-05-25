@@ -20,6 +20,6 @@ NUM_RUNS=5
 #         scripts/gpu_job.sh
 # done
 
-sbatch -D ./slurm-logs/ --job-name=v1c_$RUN \
-        --export="PYFILE=src/vit_train.py,ARGS=resume complex_20220524_1f9e" \
+sbatch -D ./slurm-logs/ --job-name=c_resume \
+        --export="PYFILE=src/vit_train.py,ARGS=resume output/complex_20220524_1f9e" \
         scripts/gpu_script.sh
