@@ -21,5 +21,5 @@ PERTURBATION = 5e-3
 PERTURBATION_LOSS_LIM = 0.75
 DROPOUT = 0.05
 
-OUT_DIR = 'output/complex'
+OUT_DIR = 'output/complex_120'
 INIT_MODEL_PATH = None
