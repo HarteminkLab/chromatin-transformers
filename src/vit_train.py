@@ -167,9 +167,9 @@ class ViTTrainer:
                 if epoch % 2000 == 0 :
                    torch.save(vit.state_dict(), f"{model_path}.{epoch}")
 
-                if epoch % 100 == 0:
-                    self.compute_predictions_losses()
-                    print_fl(self.perf_str)
+                #if epoch % 100 == 0:
+                #    self.compute_predictions_losses()
+                #    print_fl(self.perf_str)
 
                 epochs_arr.append(epoch)
                 validation_losses.append(validation_loss)
