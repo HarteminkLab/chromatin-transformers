@@ -22,7 +22,7 @@ class ViTData(Dataset):
         img_transform = transforms.Normalize((0.5), (0.5), (0.5))
 
         self.unscaled_TPM = TPM
-        self.TPM = scale(self.TPM.astype('float')).astype('float')
+        self.TPM = scale(np.log2(self.TPM+1).astype('float')).astype('float')
         self.original_imgs = self.all_imgs.copy()
         self.all_imgs = img_transform(torch.tensor(self.all_imgs))
     
