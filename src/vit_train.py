@@ -25,6 +25,7 @@ from src.data_loader import ViTDataLoader
 from src.timer import Timer
 from src.utils import print_fl, mkdir_safe
 from src.vit import ViT
+from sklearn.metrics import r2_score
 
 
 class ViTTrainer:
@@ -113,6 +114,7 @@ class ViTTrainer:
             running_loss = 0.0
 
             # Enumerate trainloader batches
+            is_perturb = False
             for i, data in enumerate(trainloader, 0):
 
                 images, tx, _, _, _ = data
@@ -126,7 +128,6 @@ class ViTTrainer:
                 loss.backward()
 
                 # Apply perturbation to weights to knock out of saddle points
-                is_perturb = False
                 if epoch % 10 == 0:
                     
                     if config.PERTURBATION > 0. and len(train_losses) > 1:
@@ -185,15 +186,6 @@ class ViTTrainer:
                 plt.cla()
                 plt.clf()
 
-                if False:#epoch % 100 == 0 :
-
-                    # Plot accuracy
-                    fig, train_r2, valid_r2, test_r2 = plot_predictions(vit, vit_data, trainloader, validationloader, 
-                        testloader, 512, device=device)
-                    plt.savefig(f'{out_dir}/predictions.png', dpi=150)
-                    plt.close(fig)
-                    plt.cla()
-                    plt.clf()
 
             # End early if loss is reached
             if train_loss < self.stoploss_value:
@@ -201,6 +193,57 @@ class ViTTrainer:
                 break
 
         print_fl(f'Finished Training {timer.get_time()}')
+
+
+    def compute_predictions_losses(self):
+
+        (self.test_tx, self.test_predictions, self.test_r2,
+         self.test_loss) = self.generate_predicted_vs_true_data(self.dataloader.testloader)
+
+        (self.train_tx, self.train_predictions, self.train_r2,
+         self.train_loss) = self.generate_predicted_vs_true_data(self.dataloader.trainloader)
+
+        (self.validation_tx, self.validation_predictions, self.validation_r2, 
+         self.validation_loss) = self.generate_predicted_vs_true_data(self.dataloader.validationloader)
+
+        perf_str = (f"Loss:\n"
+                    f"  Train:\t{self.train_loss:.3f}\n  Valid:\t{self.validation_loss:.3f}"
+                    f"\n  Test: \t{self.test_loss:.3f}"
+                    f"\n\nR2:\n"
+                    f"  Train:\t{self.train_r2:.3f}\n  Valid:\t{self.validation_r2:.3f}"
+                    f"\n  Test: \t{self.test_r2:.3f}")
+
+        self.perf_str = perf_str
+
+    def generate_predicted_vs_true_data(self, dataloader, max_num=float('inf')):
+
+        vit = self.vit
+        device = self.device
+        all_tx = np.array([])
+        all_predictions = np.array([])
+        i = 0
+        running_loss = 0
+        for imgs, tx, _, _, _ in dataloader:    
+            with torch.no_grad():
+                
+                out, weights = vit(imgs.float().to(self.device))
+                predictions = out.detach().to(torch.device('cpu')).numpy().flatten()    
+                tx = tx.to(torch.device('cpu'))
+
+                all_tx = np.concatenate([all_tx, tx])
+                all_predictions = np.concatenate([all_predictions, predictions])
+                
+                loss = self.criterion(out, tx.reshape(out.shape))
+                running_loss += loss.item()
+                i += 1
+
+            # Subsample to save time
+            if max_num is not None and len(all_predictions) > max_num:
+                break
+
+        r2 = r2_score(all_tx, all_predictions)
+
+        return all_tx, all_predictions, r2, (running_loss / i)
 
 
     def compute_validation_loss(self, dataloader, num_batches=-1):
@@ -297,7 +340,9 @@ def main():
     # Data loading
     print_fl("Loading data...")
     dataset = load_cd_data()
-    dataloader = ViTDataLoader(dataset)
+
+    dataloader = ViTDataLoader(dataset, batch_size=config.BATCH_SIZE, 
+        split_type=config.SPLIT_TYPE, split_arg=config.SPLIT_ARG)
     print_fl(f"Dataloader split: {dataloader.split_repr()}")
 
     # Initialize trainer
