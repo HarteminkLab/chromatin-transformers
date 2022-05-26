@@ -26,6 +26,7 @@ from src.timer import Timer
 from src.utils import print_fl, mkdir_safe
 from src.vit import ViT
 from sklearn.metrics import r2_score
+from src.plot_utils import plot_density_scatter
 
 
 class ViTTrainer:
@@ -120,6 +121,10 @@ class ViTTrainer:
         model_path = self.model_path
         last_k_perturb = self.last_k_perturb
 
+        debug_train = []
+        debug_valid = []
+        debug_test = []
+
         for epoch in self.epochs_to_run:
 
             running_loss = 0.0
@@ -186,15 +191,6 @@ class ViTTrainer:
                 validation_losses.append(validation_loss)
                 train_losses.append(train_loss)
 
-                loss_df = pd.DataFrame({
-                        'epoch': epochs_arr,
-                        'train_loss': train_losses,
-                        'validation_loss': validation_losses
-                    })
-                self.loss_df = loss_df
-
-                loss_df.to_csv(self.loss_path, index=False)
-
                 # Plot loss
                 fig = plot_loss_progress(loss_df, m=50)
                 plt.savefig(self.loss_fig_path, dpi=150)
@@ -202,7 +198,27 @@ class ViTTrainer:
                 plt.cla()
                 plt.clf()
 
+                self.compute_predictions_losses()
+                print_fl(self.loss_str)
 
+                self.plot_predictions()
+                plt.savefig(f"{self.out_dir}/predictions.png", dpi=150)
+                plt.close(fig)
+                plt.cla()
+                plt.clf()
+
+                loss_df = pd.DataFrame({
+                        'epoch': epochs_arr,
+                        'train_loss': train_losses,
+                        'validation_loss': validation_losses,
+                        'debug_train': self.train_loss,
+                        'debug_valid': self.validation_loss,
+                        'debug_test': self.test_loss,
+                    })
+
+                self.loss_df = loss_df
+                loss_df.to_csv(self.loss_path, index=False)
+                
             # End early if loss is reached
             if train_loss < self.stoploss_value:
                 print_fl(f"[{epoch}] Stop loss reached: {train_loss} < {self.stoploss_value}. Ending early.")
@@ -210,17 +226,43 @@ class ViTTrainer:
 
         print_fl(f'Finished Training {timer.get_time()}')
 
+    def plot_prediction_performance(self, all_tx, all_predictions, title, ax=None):
+        
+        r2 = r2_score(all_tx, all_predictions)
+        
+        unscaled_logTPM = np.log2(self.dataloader.dataset.unscaled_TPM+1)
+        mean, std = (unscaled_logTPM.mean(), 
+                     unscaled_logTPM.std())
+        x, y = all_predictions*std+mean, all_tx*std+mean
 
-    def compute_predictions_losses(self):
+        if ax is None:
+            ax = plt.gca()
+
+        plot_density_scatter(x, y, cmap='Spectral', bw=(0.25, 0.25), zorder=2, ax=ax)
+
+        plt.plot([-20, 20], [-20, 20], c='black', linestyle='solid', lw=0.5, zorder=4)
+
+        plt.xticks(np.arange(0, 20, 5))
+        plt.yticks(np.arange(0, 20, 5))
+        plt.xlim(-0.5, 15.5)
+        plt.ylim(-0.5, 15.5)
+
+        plt.ylabel('True log$_2$ transcript level, TPM')
+        plt.xlabel('Predicted log$_2$ transcript level, TPM')
+
+        plt.title(f"{title}, n={len(all_tx)}, $R^2$={r2:.3f}")
+
+
+    def compute_predictions_losses(self, max_num=float('inf')):
 
         (self.test_tx, self.test_predictions, self.test_r2,
-         self.test_loss) = self.generate_predicted_vs_true_data(self.dataloader.testloader)
+         self.test_loss) = self.generate_predicted_vs_true_data(self.dataloader.testloader, max_num)
 
         (self.train_tx, self.train_predictions, self.train_r2,
-         self.train_loss) = self.generate_predicted_vs_true_data(self.dataloader.trainloader)
+         self.train_loss) = self.generate_predicted_vs_true_data(self.dataloader.trainloader, max_num)
 
         (self.validation_tx, self.validation_predictions, self.validation_r2, 
-         self.validation_loss) = self.generate_predicted_vs_true_data(self.dataloader.validationloader)
+         self.validation_loss) = self.generate_predicted_vs_true_data(self.dataloader.validationloader, max_num)
 
         perf_str = (f"Loss:\n"
                     f"  Train:\t{self.train_loss:.3f}\n  Valid:\t{self.validation_loss:.3f}"
@@ -230,6 +272,22 @@ class ViTTrainer:
                     f"\n  Test: \t{self.test_r2:.3f}")
 
         self.perf_str = perf_str
+        self.loss_str =  (f" Train: {self.train_loss:.3f}, Valid:\t{self.validation_loss:.3f},"
+                          f" Test: \t{self.test_loss:.3f}")
+
+
+    def plot_predictions(self):
+        plt.figure(figsize=(12, 3))
+
+        plt.subplot(1, 3, 1)
+        self.plot_prediction_performance(self.train_tx, self.train_predictions, 'Train')
+
+        plt.subplot(1, 3, 2)
+        self.plot_prediction_performance(self.validation_tx, self.validation_predictions, 'Validation')
+
+        plt.subplot(1, 3, 3)
+        self.plot_prediction_performance(self.test_tx, self.test_predictions, 'Test')
+
 
     def generate_predicted_vs_true_data(self, dataloader, max_num=float('inf')):
 
@@ -364,7 +422,7 @@ def main():
 
     # Data loading
     print_fl("Loading data...")
-    dataset = load_cd_data()
+    dataset = load_cd_data_24x128()
 
     dataloader = ViTDataLoader(dataset, batch_size=config.BATCH_SIZE, 
         split_type=config.SPLIT_TYPE, split_arg=config.SPLIT_ARG)

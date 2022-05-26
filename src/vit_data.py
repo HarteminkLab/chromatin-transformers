@@ -50,21 +50,23 @@ class ViTData(Dataset):
         return tpm_data
 
 
-def load_cd_data():
+def load_cd_data_12x64():
+    file_prefix = "vit_imgs_12x64"
+    return load_cd_data(file_prefix)
 
-    pickle_paths = ('data/vit/vit_imgs_DM498_MNase_rep1_0_min.pkl',
-                    'data/vit/vit_imgs_DM499_MNase_rep1_7.5_min.pkl',
-                    'data/vit/vit_imgs_DM500_MNase_rep1_15_min.pkl',
-                    'data/vit/vit_imgs_DM501_MNase_rep1_30_min.pkl',
-                    'data/vit/vit_imgs_DM502_MNase_rep1_60_min.pkl',
-                    'data/vit/vit_imgs_DM503_MNase_rep1_120_min.pkl'
+def load_cd_data_24x128():
+    file_prefix = "vit_imgs_24x128"
+    return load_cd_data(file_prefix)
+
+def load_cd_data(file_prefix):
+
+    pickle_paths = (f'data/vit/{file_prefix}_DM498_MNase_rep1_0_min.pkl',
+                    f'data/vit/{file_prefix}_DM499_MNase_rep1_7.5_min.pkl',
+                    f'data/vit/{file_prefix}_DM500_MNase_rep1_15_min.pkl',
+                    f'data/vit/{file_prefix}_DM501_MNase_rep1_30_min.pkl',
+                    f'data/vit/{file_prefix}_DM502_MNase_rep1_60_min.pkl',
+                    f'data/vit/{file_prefix}_DM503_MNase_rep1_120_min.pkl'
                     )
-                    # 'data/vit/vit_imgs_DM504_MNase_rep2_0_min.pkl',
-                    # 'data/vit/vit_imgs_DM505_MNase_rep2_7.5_min.pkl',
-                    # 'data/vit/vit_imgs_DM506_MNase_rep2_15_min.pkl',
-                    # 'data/vit/vit_imgs_DM507_MNase_rep2_30_min.pkl',
-                    # 'data/vit/vit_imgs_DM508_MNase_rep2_60_min.pkl',
-                    # 'data/vit/vit_imgs_DM509_MNase_rep2_120_min.pkl')
 
     TPM_path = 'data/vit/cd_rna_seq_TPM.csv'
 
