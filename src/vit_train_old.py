@@ -74,7 +74,7 @@ def compute_validation_loss(vit, testloader, criterion,
             tx = tx.to(device)
 
             # calculate outputs by running images through the network
-            outputs, weights = vit(images)
+            outputs, weights = vit(images.float())
             outputs = outputs.to(device)
             loss = criterion(outputs, tx.reshape(outputs.shape))
             running_loss += loss.item()

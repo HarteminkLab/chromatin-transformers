@@ -351,6 +351,7 @@ def main():
         resume_path = sys.argv[2]
         resume = True
         vit, config = load_model_dir(resume_path)
+        config_name = None
 
     elif len(sys.argv) == 2:
         config_name = sys.argv[1]
