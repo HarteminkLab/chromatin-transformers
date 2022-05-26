@@ -30,7 +30,7 @@ class ViTData(Dataset):
         return len(self.all_imgs)
 
     def __getitem__(self, idx):
-        return self.all_imgs[idx], self.TPM[idx], self.orfs[idx], self.chrs[idx], self.times[idx]
+        return self.all_imgs[idx], self.TPM[idx]#, self.orfs[idx], self.chrs[idx], self.times[idx]
 
     def create_tpm_df(self):
         data_df = pd.DataFrame({
@@ -89,6 +89,8 @@ def load_cd_data(file_prefix):
         times = np.append(times, np.repeat(float(time), len(imgs)))
         orfs = np.append(orfs, np.array(desc['orfs']))
         chrs = np.append(chrs, np.array(desc['chrs']))
+
+        print(orfs)
         
         df.loc[i, 'DM'] = dm
         df.loc[i, 'replicate'] = rep
@@ -100,9 +102,11 @@ def load_cd_data(file_prefix):
     tpm_df = tpm_df.unstack().reset_index().rename(columns={'level_0': 'time', 0: 'TPM'})
     orfs_times = list(zip(orfs, times))
     tpm_df = tpm_df.set_index(['orf_name', 'time']).loc[orfs_times]
-    TPM = tpm_df.TPM.values
+    #TPM = tpm_df.TPM.values
 
-    vit_data = ViTData(all_imgs, orfs, chrs, times, TPM)
+    print(tpm_df)
+
+    #vit_data = ViTData(all_imgs, orfs, chrs, times, TPM)
 
     return vit_data
 

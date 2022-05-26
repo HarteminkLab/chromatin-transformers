@@ -216,8 +216,6 @@ def main():
             i += 1
             
             timer.print_progress(i, len(orfs), conditional=(i % 100 == 0))
-            break
-        break
 
     # Insert channel dim
     imgs = imgs.reshape(imgs.shape[0], 1, imgs.shape[1], imgs.shape[2])
