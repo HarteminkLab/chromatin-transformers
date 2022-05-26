@@ -21,7 +21,7 @@ class ViTDataLoader:
         elif split_type == 'time':
             self.trainset, self.validationset, self.testset = testtrain_split_time(self.dataset, test_time=split_arg)
         else:
-            raise ValuerError()
+            raise ValueError("Invalid split type")
 
         # Load train loader
         self.trainloader = torch.utils.data.DataLoader(self.trainset, batch_size=batch_size)

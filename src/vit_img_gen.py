@@ -181,17 +181,17 @@ def main():
     len_cuts = [30, 80, 130, 201]
 
     # window = 1024 bp
-    # resize width = 64 pixels (x16 downscale)
-    # patch width = 4 pixels
+    # resize width = 128 pixels (x8 downscale)
+    # patch width = 8 pixels
 
-    # 64 / 4 = 16 column patches
-    # 1024 / 16 = 64 bp per patch
-    # 12x64 shaped images
+    # 128 / 8 = 16 column patches
+    # 1024 / 8 = 64 bp per patch
+    # 24x128 shaped images
     window = 1024
-    patch_size = 4
+    patch_size = 8
     sublength_resize_height = patch_size # times 3 vertical patches of height
     img_height = patch_size*(len(len_cuts)-1)
-    img_width = 64
+    img_width = 128
 
     vit_gen = ViTImgGen(mnase, window, sublength_resize_height, len_cuts,
                         img_width, patch_size)
@@ -216,6 +216,11 @@ def main():
             i += 1
             
             timer.print_progress(i, len(orfs), conditional=(i % 100 == 0))
+            break
+        break
+
+    # Insert channel dim
+    imgs = imgs.reshape(imgs.shape[0], 1, imgs.shape[1], imgs.shape[2])
 
     desc_dict = {"img_size": (img_height, img_width),
                  "window": window,
@@ -227,7 +232,7 @@ def main():
                  "lengths": vit_gen.len_span,
                  "orfs": saved_orfs}
 
-    savepath = f'data/vit/vit_imgs_{filename}.pkl'
+    savepath = f'data/vit/vit_imgs_{img_height}x{img_width}_{filename}.pkl'
     save_tuple = (desc_dict, imgs)
 
     write_pickle(save_tuple, savepath)
