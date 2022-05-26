@@ -30,7 +30,7 @@ class ViTData(Dataset):
         return len(self.all_imgs)
 
     def __getitem__(self, idx):
-        return self.all_imgs[idx], self.TPM[idx]#, self.orfs[idx], self.chrs[idx], self.times[idx]
+        return self.all_imgs[idx], self.TPM[idx], self.orfs[idx], self.chrs[idx], self.times[idx]
 
     def create_tpm_df(self):
         data_df = pd.DataFrame({
