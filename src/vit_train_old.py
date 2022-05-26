@@ -111,20 +111,28 @@ def load_model_dir(model_dir):
 
 def main():
 
-    args = ['', 'resume', 'output/complex_test']
+    #args = ['', 'resume', 'output/complex_test']
+    args = ['', 'complex_32x128_120']
 
     if args[1] == 'resume':
         resume = True
         resume_path = args[2]
+        out_dir = resume_path
+        model_path = f'{resume_path}/model.torch'
+
+        vit, config = load_model_dir(resume_path)
+        vit.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+
+    else:
+        config_name = args[1]
+        model_path = f"config.{config_name}"
+        config = importlib.import_module(model_path)
+        out_dir = config.OUT_DIR
+        vit = load_model_config(config)
+        resume = False
     
-    out_dir = resume_path
-    vit, config = load_model_dir(resume_path)
-
-    model_path = f'{resume_path}/model.torch'
-    vit.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
-
-    loss_path = f"{resume_path}/loss.csv"
-    loss_fig_path = f"{resume_path}/loss.png"
+    loss_path = f"{out_dir}/loss.csv"
+    loss_fig_path = f"{out_dir}/loss.png"
 
     if torch.cuda.is_available():
         device = torch.device("cuda") 

@@ -52,56 +52,11 @@ class ViTData(Dataset):
 
 def load_cd_data():
 
-    pickle_paths = ('data/vit/vit_imgs_DM498_MNase_rep1_0_min.pkl',
-                    'data/vit/vit_imgs_DM499_MNase_rep1_7.5_min.pkl',
-                    'data/vit/vit_imgs_DM500_MNase_rep1_15_min.pkl',
-                    'data/vit/vit_imgs_DM501_MNase_rep1_30_min.pkl',
-                    'data/vit/vit_imgs_DM502_MNase_rep1_60_min.pkl',
-                    'data/vit/vit_imgs_DM503_MNase_rep1_120_min.pkl'
-                    )
-                    # 'data/vit/vit_imgs_DM504_MNase_rep2_0_min.pkl',
-                    # 'data/vit/vit_imgs_DM505_MNase_rep2_7.5_min.pkl',
-                    # 'data/vit/vit_imgs_DM506_MNase_rep2_15_min.pkl',
-                    # 'data/vit/vit_imgs_DM507_MNase_rep2_30_min.pkl',
-                    # 'data/vit/vit_imgs_DM508_MNase_rep2_60_min.pkl',
-                    # 'data/vit/vit_imgs_DM509_MNase_rep2_120_min.pkl')
+    pdata = read_pickle('data/vit/vit_data_gene_TSS_mnase_32_128.pkl')
 
-    TPM_path = 'data/vit/cd_rna_seq_TPM.csv'
-
-    i = 0
-    df = pd.DataFrame()
-    times = np.array([])
-    orfs = np.array([])
-    chrs = np.array([])
-    all_imgs = None
-
-    for path in pickle_paths:        
-        filesplit = path.split('/')[-1].split('_')[2:]
-        dm, rep, time = filesplit[0], filesplit[2], filesplit[3]
-        desc, imgs = read_pickle(path)
-
-        if all_imgs is None: all_imgs = imgs
-        else:
-            all_imgs = np.concatenate([all_imgs, imgs])
-
-        times = np.append(times, np.repeat(float(time), len(imgs)))
-        orfs = np.append(orfs, np.array(desc['orfs']))
-        chrs = np.append(chrs, np.array(desc['chrs']))
-        
-        df.loc[i, 'DM'] = dm
-        df.loc[i, 'replicate'] = rep
-        df.loc[i, 'time'] = float(time)
-        df.loc[i, 'path'] = path
-        i += 1
-
-    # Add channel dimension
-    all_imgs = all_imgs.reshape(all_imgs.shape[0], 1, all_imgs.shape[1], all_imgs.shape[2])
-    
-    tpm_df = read_orfs_data(TPM_path)
-    tpm_df = tpm_df.unstack().reset_index().rename(columns={'level_0': 'time', 0: 'TPM'})
-    orfs_times = list(zip(orfs, times))
-    tpm_df = tpm_df.set_index(['orf_name', 'time']).loc[orfs_times]
-    TPM = tpm_df.TPM.values
+    (all_imgs, TPM, 
+     chrs, orfs,
+     times) = pdata
 
     vit_data = ViTData(all_imgs, orfs, chrs, times, TPM)
 
