@@ -79,7 +79,7 @@ def load_cd_data(file_prefix):
 
     for path in pickle_paths:        
         filesplit = path.split('/')[-1].split('_')[2:]
-        dm, rep, time = filesplit[0], filesplit[2], filesplit[3]
+        dm, rep, time = filesplit[0], filesplit[2], filesplit[-2]
         desc, imgs = read_pickle(path)
 
         if all_imgs is None: all_imgs = imgs
@@ -95,9 +95,6 @@ def load_cd_data(file_prefix):
         df.loc[i, 'time'] = float(time)
         df.loc[i, 'path'] = path
         i += 1
-
-    # Add channel dimension
-    all_imgs = all_imgs.reshape(all_imgs.shape[0], 1, all_imgs.shape[1], all_imgs.shape[2])
     
     tpm_df = read_orfs_data(TPM_path)
     tpm_df = tpm_df.unstack().reset_index().rename(columns={'level_0': 'time', 0: 'TPM'})
