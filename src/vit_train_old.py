@@ -284,11 +284,11 @@ def main():
             print_fl('[%d] train loss: %.5f, validation loss %.5f, %s %s' %
                   (epoch + 1, train_loss, validation_loss, timer.get_time(), perturb_str))
 
-            torch.save(vit.state_dict(), model_path)
+            torch.save(vit.state_dict(), f"{out_dir}/model.torch")
 
             # Save intermediate model
             if epoch % 2000 == 0 :
-               torch.save(vit.state_dict(), f"{model_path}.{epoch}")
+               torch.save(vit.state_dict(), f"{out_dir}/model.torch.{epoch}")
 
             epochs_arr.append(epoch)
             validation_losses.append(validation_loss)

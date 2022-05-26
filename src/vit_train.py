@@ -191,14 +191,12 @@ class ViTTrainer:
                 validation_losses.append(validation_loss)
                 train_losses.append(train_loss)
 
-                # Plot loss
-                fig = plot_loss_progress(loss_df, m=50)
-                plt.savefig(self.loss_fig_path, dpi=150)
-                plt.close(fig)
-                plt.cla()
-                plt.clf()
-
                 self.compute_predictions_losses()
+
+                debug_train.append(self.train_loss)
+                debug_valid.append(self.validation_loss)
+                debug_test.append(self.test_loss)
+
                 print_fl(self.loss_str)
 
                 self.plot_predictions()
@@ -211,10 +209,17 @@ class ViTTrainer:
                         'epoch': epochs_arr,
                         'train_loss': train_losses,
                         'validation_loss': validation_losses,
-                        'debug_train': self.train_loss,
-                        'debug_valid': self.validation_loss,
-                        'debug_test': self.test_loss,
+                        'debug_train': debug_train,
+                        'debug_valid': debug_valid,
+                        'debug_test': debug_test,
                     })
+
+                # Plot loss
+                fig = plot_loss_progress(loss_df, m=50)
+                plt.savefig(self.loss_fig_path, dpi=150)
+                plt.close(fig)
+                plt.cla()
+                plt.clf()
 
                 self.loss_df = loss_df
                 loss_df.to_csv(self.loss_path, index=False)
