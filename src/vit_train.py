@@ -20,7 +20,7 @@ from torch import nn
 from torch import Tensor
 from PIL import Image
 from scipy.stats import spearmanr
-from src.vit_data import load_cd_data
+from src.vit_data_2 import load_cd_data
 from src.data_loader import ViTDataLoader
 from src.timer import Timer
 from src.utils import print_fl, mkdir_safe
@@ -356,6 +356,8 @@ def main():
         config_name = sys.argv[1]
         config = importlib.import_module(f"config.{config_name}")
         vit = load_model_config(config)
+        resume = False
+        resume_path = None
 
     print_fl(f"Config: {vit.config_repr()}")
 
