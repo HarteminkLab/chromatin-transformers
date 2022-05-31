@@ -199,7 +199,7 @@ class ViTTrainer:
 
                 print_fl(self.loss_str)
 
-                self.plot_predictions()
+                fig = self.plot_predictions()
                 plt.savefig(f"{self.out_dir}/predictions.png", dpi=150)
                 plt.close(fig)
                 plt.cla()
@@ -282,7 +282,7 @@ class ViTTrainer:
 
 
     def plot_predictions(self):
-        plt.figure(figsize=(12, 3))
+        fig = plt.figure(figsize=(12, 3))
 
         plt.subplot(1, 3, 1)
         self.plot_prediction_performance(self.train_tx, self.train_predictions, 'Train')
@@ -292,6 +292,8 @@ class ViTTrainer:
 
         plt.subplot(1, 3, 3)
         self.plot_prediction_performance(self.test_tx, self.test_predictions, 'Test')
+
+        return fig
 
 
     def generate_predicted_vs_true_data(self, dataloader, max_num=float('inf')):
@@ -312,7 +314,8 @@ class ViTTrainer:
                 all_tx = np.concatenate([all_tx, tx])
                 all_predictions = np.concatenate([all_predictions, predictions])
                 
-                loss = self.criterion(out, tx.reshape(out.shape))
+                loss = self.criterion(out.to(torch.device('cpu')), 
+                                      tx.reshape(out.shape).to(torch.device('cpu')))
                 running_loss += loss.item()
                 i += 1
 
