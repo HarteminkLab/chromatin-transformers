@@ -238,7 +238,7 @@ class ViTTrainer:
         if ax is None:
             ax = plt.gca()
 
-        plot_density_scatter(x, y, cmap='Spectral', bw=(0.25, 0.25), zorder=2, ax=ax)
+        plot_density_scatter(x, y, cmap='Spectral_r', bw=(0.25, 0.25), zorder=2, ax=ax)
 
         plt.plot([-20, 20], [-20, 20], c='black', linestyle='solid', lw=0.5, zorder=4)
 
@@ -297,8 +297,9 @@ class ViTTrainer:
         all_predictions = np.array([])
         i = 0
         running_loss = 0
-        for imgs, tx, _, _, _ in dataloader:    
-            with torch.no_grad():
+
+        with torch.no_grad():
+            for imgs, tx, _, _, _ in dataloader:    
                 
                 out, weights = vit(imgs.float().to(self.device))
                 predictions = out.detach().to(torch.device('cpu')).numpy().flatten()    
@@ -311,9 +312,9 @@ class ViTTrainer:
                 running_loss += loss.item()
                 i += 1
 
-            # Subsample to save time
-            if max_num is not None and len(all_predictions) > max_num:
-                break
+                # Subsample to save time
+                if max_num is not None and len(all_predictions) > max_num:
+                    break
 
         r2 = r2_score(all_tx, all_predictions)
 

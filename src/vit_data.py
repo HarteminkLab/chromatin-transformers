@@ -21,6 +21,7 @@ class ViTData(Dataset):
 
         img_transform = transforms.Normalize((0.5), (0.5), (0.5))
 
+        self.orfs_data = read_orfs_data('data/orfs_cd_paper_dataset.csv')
         self.unscaled_TPM = TPM
         self.TPM = scale(np.log2(self.TPM+1).astype('float')).astype('float')
         self.original_imgs = self.all_imgs.copy()
@@ -31,6 +32,10 @@ class ViTData(Dataset):
 
     def __getitem__(self, idx):
         return self.all_imgs[idx], self.TPM[idx], self.orfs[idx], self.chrs[idx], self.times[idx]
+
+    def unscale_tx(self, tx):
+        mean, std = self.unscaled_TPM.mean(), self.unscaled_TPM.std()
+        return tx*std+mean
 
     def create_tpm_df(self):
         data_df = pd.DataFrame({
@@ -49,6 +54,14 @@ class ViTData(Dataset):
         tpm_data = tpm_data.sort_values(120.0, ascending=False).join(orfs[['name']])
         return tpm_data
 
+    def index_for(self, gene_name, time):
+        orf_name = self.orfs_data[(self.orfs_data['name'] == gene_name) |
+                             (self.orfs_data.index == gene_name)].index.values[0]
+
+        index = np.arange(len(self))[(self.orfs == orf_name) & 
+                                       (self.times == time)][0]
+
+        return index
 
 def load_cd_data_12x64():
     file_prefix = "vit_imgs_12x64"
