@@ -183,10 +183,6 @@ class ViTTrainer:
                 if epoch % 2000 == 0 :
                    torch.save(vit.state_dict(), f"{model_path}.{epoch}")
 
-                #if epoch % 100 == 0:
-                #    self.compute_predictions_losses()
-                #    print_fl(self.perf_str)
-
                 epochs_arr.append(epoch)
                 validation_losses.append(validation_loss)
                 train_losses.append(train_loss)
@@ -394,19 +390,19 @@ def plot_loss_progress(loss_df, m):
     plt.subplots_adjust(hspace=0.5, wspace=0.3)
 
     plt.subplot(1, 3, 1)
-    plt.plot(loss_df.epoch, loss_df.train_loss, label='Training loss')
-    plt.plot(loss_df.epoch, loss_df.validation_loss, label='Validation loss')
+    plt.plot(loss_df.epoch, loss_df.debug_train, label='Training loss')
+    plt.plot(loss_df.epoch, loss_df.debug_valid, label='Validation loss')
     plt.legend()
 
     plt.subplot(1, 3, 2)
-    plt.plot(loss_df.epoch[-m:], loss_df.train_loss[-m:], label='Training loss')
-    plt.title(f"Training loss, {loss_df.train_loss.values[-1]:.8f}")
+    plt.plot(loss_df.epoch[-m:], loss_df.debug_train[-m:], label='Training loss')
+    plt.title(f"Training loss, {loss_df.debug_train.values[-1]:.8f}")
     
     plt.subplot(1, 3, 3)
-    plt.plot(loss_df.epoch[-m:], loss_df.validation_loss[-m:], label='Validation loss',
+    plt.plot(loss_df.epoch[-m:], loss_df.debug_valid[-m:], label='Validation loss',
         c=plt.get_cmap('tab10')(1))
     
-    plt.title(f"Validation loss, {loss_df.validation_loss.values[-1]:.8f}")
+    plt.title(f"Validation loss, {loss_df.debug_valid.values[-1]:.8f}")
     return fig
 
 
