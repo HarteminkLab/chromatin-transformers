@@ -45,8 +45,8 @@ def plot_gene_prediction(gene_name, time, vit, vit_data, orf_plotter=None, rna_p
         x = x.to(device).float()
         out, weights = vit(x)
 
-    tx = vit_data.unscaled_TPM[idx]
-    pred_tx = vit_data.unscale_tx(out.to(torch.device('cpu'))).item()
+    tx = np.log2(vit_data.unscaled_TPM[idx]+1)
+    pred_tx = np.log2(vit_data.unscale_tx(out.to(torch.device('cpu'))).item()+1)
     extent = [span[0], span[1], 0, 256]
 
     title=f"{gene_name}, {str(t)}' True: {tx:.1f}, Pred: {pred_tx:.1f}"

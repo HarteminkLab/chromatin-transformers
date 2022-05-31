@@ -32,6 +32,18 @@ class ViTData(Dataset):
     def __getitem__(self, idx):
         return self.all_imgs[idx], self.TPM[idx], self.orfs[idx], self.chrs[idx], self.times[idx]
 
+    def unscale_tx(self, tx):
+        mean, std = self.unscaled_TPM.mean(), self.unscaled_TPM.std()
+        return tx*std+mean
+
+    def index_for(self, gene_name, time):
+        self.orfs_data = read_orfs_data('data/orfs_cd_paper_dataset.csv')
+        orf_name = self.orfs_data[(self.orfs_data['name'] == gene_name) |
+                             (self.orfs_data.index == gene_name)].index.values[0]
+        index = np.arange(len(self))[(self.orfs == orf_name) & 
+                                       (self.times == time)][0]
+        return index
+
     def create_tpm_df(self):
         data_df = pd.DataFrame({
             'orf_name': self.dataloader.dataset.orfs,
@@ -53,13 +65,10 @@ class ViTData(Dataset):
 def load_cd_data():
 
     pdata = read_pickle('data/vit/vit_data_gene_TSS_mnase_32_128.pkl')
-
     (all_imgs, TPM, 
      chrs, orfs,
      times) = pdata
-
     vit_data = ViTData(all_imgs, orfs, chrs, times, TPM)
-
     return vit_data
 
 
