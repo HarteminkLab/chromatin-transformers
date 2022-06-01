@@ -52,6 +52,7 @@ class PatchEmbedding(nn.Module):
         self.positions = nn.Parameter(torch.randn(self.num_params, emb_size))
 
     def forward(self, x, **kwargs):
+
         b, _, _, _ = x.shape
 
         x = self.patches(x)

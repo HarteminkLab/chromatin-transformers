@@ -14,13 +14,13 @@ import pandas as pd
 import numpy as np
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
+import src.vit_data as vit_data_mod
 
 from datetime import date
 from torch import nn
 from torch import Tensor
 from PIL import Image
 from scipy.stats import spearmanr
-from src.vit_data import load_cd_data_24x128
 from src.data_loader import ViTDataLoader
 from src.timer import Timer
 from src.utils import print_fl, mkdir_safe
@@ -433,7 +433,9 @@ def main():
 
     # Data loading
     print_fl("Loading data...")
-    dataset = load_cd_data_24x128(replicate_mode=config.REPLICATE_MODE)
+
+    # Dynamic load the correct data loading function
+    dataset = getattr(vit_data_mod, config.DATA_FUNC)(replicate_mode=config.REPLICATE_MODE)
 
     dataloader = ViTDataLoader(dataset, batch_size=config.BATCH_SIZE, 
         split_type=config.SPLIT_TYPE, split_arg=config.SPLIT_ARG)

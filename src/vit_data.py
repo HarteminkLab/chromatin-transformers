@@ -17,6 +17,7 @@ from sklearn.preprocessing import scale
 class ViTData(Dataset):
 
     def __init__(self, all_imgs, orfs, chrs, times, TPM):
+
         (self.all_imgs, self.orfs, self.chrs, self.times, 
          self.TPM) = all_imgs, orfs, chrs, times, TPM
 
@@ -71,7 +72,6 @@ def load_cd_data_12x64(replicate_mode='merge'):
 
 
 def load_cd_data_24x128(replicate_mode='merge'):
-    print(replicate_mode)
     file_prefix = "vit_imgs_24x128"
     return load_cd_data(file_prefix, replicate_mode)
 
@@ -113,6 +113,10 @@ def read_mnase_pickle(pickle_paths):
         df.loc[i, 'time'] = float(time)
         df.loc[i, 'path'] = path
         i += 1
+
+    # TODO: Add channel dim if it is missing
+    if all_imgs.ndim == 3:
+        all_imgs = all_imgs.reshape(all_imgs.shape[0], 1, all_imgs.shape[1], all_imgs.shape[2])
 
     return all_imgs, times, orfs, chrs, df
 
