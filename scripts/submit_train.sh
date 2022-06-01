@@ -18,8 +18,24 @@ NUM_RUNS=5
 #done
 
 # Channel for each replicate
+#for RUN in `seq $NUM_RUNS`; do 
+#    sbatch -D ./slurm-logs/ --job-name=12x_merge_$RUN \
+#        --export="PYFILE=src/vit_train.py,ARGS=12x_120_merged" \
+#        scripts/gpu_job.sh
+#done
+
+# Channel for each replicate
 for RUN in `seq $NUM_RUNS`; do 
-    sbatch -D ./slurm-logs/ --job-name=12x_merge_$RUN \
-        --export="PYFILE=src/vit_train.py,ARGS=12x_120_merged" \
+    sbatch -D ./slurm-logs/ --job-name=12x_simpl_$RUN \
+        --export="PYFILE=src/vit_train.py,ARGS=12x_120_simple" \
         scripts/gpu_job.sh
 done
+
+
+# Channel for each replicate
+for RUN in `seq $NUM_RUNS`; do 
+    sbatch -D ./slurm-logs/ --job-name=12x_comp_$RUN \
+        --export="PYFILE=src/vit_train.py,ARGS=12x_120_complex" \
+        scripts/gpu_job.sh
+done
+
