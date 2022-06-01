@@ -24,7 +24,6 @@ from src.vit_data import load_cd_data_24x128
 from src.data_loader import ViTDataLoader
 from src.timer import Timer
 from src.utils import print_fl, mkdir_safe
-from src.vit import ViT
 from sklearn.metrics import r2_score
 from src.plot_utils import plot_density_scatter
 
@@ -362,8 +361,15 @@ def get_device():
     return device
 
 
-def load_model_config(config):
-    model_class = ViT
+def load_model_config(config, legacy=False):
+
+    from src.vit import ViT as ViT_legacy
+    from src.vit_2 import ViT
+
+    if legacy:
+        model_class = ViT_legacy
+    else:
+        model_class = ViT
 
     vit = model_class(config)
     return vit
@@ -427,7 +433,7 @@ def main():
 
     # Data loading
     print_fl("Loading data...")
-    dataset = load_cd_data_24x128()
+    dataset = load_cd_data_24x128(replicate_mode=config.REPLICATE_MODE)
 
     dataloader = ViTDataLoader(dataset, batch_size=config.BATCH_SIZE, 
         split_type=config.SPLIT_TYPE, split_arg=config.SPLIT_ARG)

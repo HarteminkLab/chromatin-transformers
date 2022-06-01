@@ -65,14 +65,15 @@ class ViTData(Dataset):
         return index
 
 
-def load_cd_data_12x64():
+def load_cd_data_12x64(replicate_mode='merge'):
     file_prefix = "vit_imgs_12x64"
-    return load_cd_data(file_prefix)
+    return load_cd_data(file_prefix, replicate_mode)
 
 
-def load_cd_data_24x128():
+def load_cd_data_24x128(replicate_mode='merge'):
+    print(replicate_mode)
     file_prefix = "vit_imgs_24x128"
-    return load_cd_data(file_prefix)
+    return load_cd_data(file_prefix, replicate_mode)
 
 
 def read_cd_rna_seq(orfs, times):
@@ -132,15 +133,19 @@ def load_cd_data(file_prefix, replicate_mode='merge'):
                       f'data/vit/{file_prefix}_DM508_MNase_rep2_60_min.pkl',
                       f'data/vit/{file_prefix}_DM509_MNase_rep2_120_min.pkl')
 
+    all_imgs_1, times, orfs, chrs, df = read_mnase_pickle(pickle_paths_1)
+    all_imgs_2, _, _, _, _ = read_mnase_pickle(pickle_paths_2)
+
     # Merge the replicates
     if replicate_mode == 'merge':
-        all_imgs_1, times, orfs, chrs, df = read_mnase_pickle(pickle_paths_1)
-        all_imgs_2, _, _, _, _ = read_mnase_pickle(pickle_paths_2)
         all_imgs = (all_imgs_1 + all_imgs_1)
 
     # Treat replicates as separate channels
+    elif replicate_mode == 'channels':
+        all_imgs = np.concatenate([all_imgs_1, all_imgs_1], axis=1)
+
     else:
-        raise ValueError("Unimplemented")
+        raise ValueError(f"Unimplemented {replicate_mode}")
     
     TPM = read_cd_rna_seq(orfs, times)
 
