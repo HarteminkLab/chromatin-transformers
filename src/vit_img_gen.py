@@ -19,6 +19,7 @@ from src.utils import write_pickle
 from src.read_bam import read_mnase_bam
 from src.utils import normal_2d_kernel
 from src.chromatin import filter_mnase
+from src.utils import print_fl, mkdir_safe
 
 
 class ViTImgGen:
@@ -162,13 +163,16 @@ def subselect_resize(smoothed, len_subselect, resize_size):
 
 def main():
 
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 3:
         raise ValueError("No BAM file specified")
 
     timer = Timer()
 
     bam_file = sys.argv[1]
+    out_dir = sys.argv[2]
     filename = bam_file.split('/')[-1].split('.')[0]
+
+    mkdir_safe(out_dir)
 
     print("Reading BAM...")
     mnase = read_mnase_bam(bam_file, timer=timer)

@@ -123,19 +123,19 @@ def read_mnase_pickle(pickle_paths):
 
 def load_cd_data(file_prefix, replicate_mode='merge'):
 
-    pickle_paths_1 = (f'data/vit/{file_prefix}_DM498_MNase_rep1_0_min.pkl',
-                    f'data/vit/{file_prefix}_DM499_MNase_rep1_7.5_min.pkl',
-                    f'data/vit/{file_prefix}_DM500_MNase_rep1_15_min.pkl',
-                    f'data/vit/{file_prefix}_DM501_MNase_rep1_30_min.pkl',
-                    f'data/vit/{file_prefix}_DM502_MNase_rep1_60_min.pkl',
-                    f'data/vit/{file_prefix}_DM503_MNase_rep1_120_min.pkl')
+    pickle_paths_1 = (f'data/vit/cd/{file_prefix}_DM498_MNase_rep1_0_min.pkl',
+                    f'data/vit/cd/{file_prefix}_DM499_MNase_rep1_7.5_min.pkl',
+                    f'data/vit/cd/{file_prefix}_DM500_MNase_rep1_15_min.pkl',
+                    f'data/vit/cd/{file_prefix}_DM501_MNase_rep1_30_min.pkl',
+                    f'data/vit/cd/{file_prefix}_DM502_MNase_rep1_60_min.pkl',
+                    f'data/vit/cd/{file_prefix}_DM503_MNase_rep1_120_min.pkl')
 
-    pickle_paths_2 = (f'data/vit/{file_prefix}_DM504_MNase_rep2_0_min.pkl',
-                      f'data/vit/{file_prefix}_DM505_MNase_rep2_7.5_min.pkl',
-                      f'data/vit/{file_prefix}_DM506_MNase_rep2_15_min.pkl',
-                      f'data/vit/{file_prefix}_DM507_MNase_rep2_30_min.pkl',
-                      f'data/vit/{file_prefix}_DM508_MNase_rep2_60_min.pkl',
-                      f'data/vit/{file_prefix}_DM509_MNase_rep2_120_min.pkl')
+    pickle_paths_2 = (f'data/vit/cd/{file_prefix}_DM504_MNase_rep2_0_min.pkl',
+                      f'data/vit/cd/{file_prefix}_DM505_MNase_rep2_7.5_min.pkl',
+                      f'data/vit/cd/{file_prefix}_DM506_MNase_rep2_15_min.pkl',
+                      f'data/vit/cd/{file_prefix}_DM507_MNase_rep2_30_min.pkl',
+                      f'data/vit/cd/{file_prefix}_DM508_MNase_rep2_60_min.pkl',
+                      f'data/vit/cd/{file_prefix}_DM509_MNase_rep2_120_min.pkl')
 
     all_imgs_1, times, orfs, chrs, df = read_mnase_pickle(pickle_paths_1)
     all_imgs_2, _, _, _, _ = read_mnase_pickle(pickle_paths_2)
