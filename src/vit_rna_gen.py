@@ -67,7 +67,7 @@ def gen_cell_cycle_rna(parent_dir):
                           (140, f'{parent_dir}/DMAH114_RNA_rep2_140_min.bam')]
 
     times = [0, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 130, 140]
-    get_rna(parent_dir, rna_bam_files_rep1, rna_bam_files_rep2, times, 'data/vit', 'cell_cycle_rna')
+    gen_rna(parent_dir, rna_bam_files_rep1, rna_bam_files_rep2, times, 'data/vit', 'cell_cycle_rna')
 
 
 def gen_cd_rna(parent_dir):
@@ -86,7 +86,7 @@ def gen_cd_rna(parent_dir):
                           (120.0, f'{parent_dir}/DM1455_RNA_rep2_120_min.bam')]
 
     times = [0.0, 7.5, 15, 30, 60, 120]
-    get_rna(parent_dir, rna_bam_files_rep1, rna_bam_files_rep2, times, 'data/vit', 'cd_rna')
+    gen_rna(parent_dir, rna_bam_files_rep1, rna_bam_files_rep2, times, 'data/vit', 'cd_rna')
 
 
 def gen_rna(parent_dir, rna_bam_files_rep1, rna_bam_files_rep2, times, save_dir, save_prefix):
@@ -112,7 +112,7 @@ def gen_rna(parent_dir, rna_bam_files_rep1, rna_bam_files_rep2, times, save_dir,
     timer.print_time()
 
 
-def main()
+def main():
 
     if len(sys.argv) < 2:
         raise ValueError("No BAM directory specified")
