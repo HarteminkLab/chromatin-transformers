@@ -102,11 +102,11 @@ def gen_rna(parent_dir, rna_bam_files_rep1, rna_bam_files_rep2, times, save_dir,
     combined_read_counts = pd.concat([rep1_read_counts, rep2_read_counts]).groupby('orf_name').sum()
     TPM_values = convert_read_counts_TPM(combined_read_counts, orfs, times)
 
-    save_path = f"{save_dir}/{save_path}_read_counts.csv"
+    save_path = f"{save_dir}/{save_prefix}_read_counts.csv"
     combined_read_counts.to_csv(save_path)
     print(f"Wrote to {save_path}")
 
-    save_path = f"{save_dir}/{save_path}_TPM.csv"
+    save_path = f"{save_dir}/{save_prefix}_TPM.csv"
     TPM_values.to_csv(save_path)
     print(f"Wrote to {save_path}")
     timer.print_time()
