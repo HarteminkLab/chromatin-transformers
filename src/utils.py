@@ -19,9 +19,9 @@ def mkdirs_safe(directories, log=True):
 
 
 def mkdir_safe(directory, log=True):
-    if log: print_fl("Creating directory: %s..." % directory, end='')
 
     if not os.path.exists(directory):
+        if log: print_fl("Creating directory: %s..." % directory, end='')
         os.makedirs(directory)
     elif log:
         print_fl("Directory exists. Skipping.", end='')

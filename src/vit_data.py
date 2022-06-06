@@ -76,11 +76,10 @@ def load_cd_data_24x128(replicate_mode='merge'):
     return load_cd_data(file_prefix, replicate_mode)
 
 
-def read_cd_rna_seq(orfs, times):
-    TPM_path = 'data/vit/cd_rna_seq_TPM.csv'
-        
+def read_rna_TPM(TPM_path, orfs, times):    
     tpm_df = read_orfs_data(TPM_path)
     tpm_df = tpm_df.unstack().reset_index().rename(columns={'level_0': 'time', 0: 'TPM'})
+    tpm_df.time = tpm_df.time.astype('int')
     orfs_times = list(zip(orfs, times))
     tpm_df = tpm_df.set_index(['orf_name', 'time']).loc[orfs_times]
     TPM = tpm_df.TPM.values
@@ -121,7 +120,66 @@ def read_mnase_pickle(pickle_paths):
     return all_imgs, times, orfs, chrs, df
 
 
+def load_cell_cycle_data(replicate_mode='merge'):
+    
+    pickle_paths_1 = (f'data/vit/cell_cycle/vit_imgs_24x128_DMAH64_MNase_rep1_0_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH66_MNase_rep1_20_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH67_MNase_rep1_30_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH68_MNase_rep1_40_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH69_MNase_rep1_50_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH70_MNase_rep1_60_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH71_MNase_rep1_70_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH72_MNase_rep1_80_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH73_MNase_rep1_90_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH74_MNase_rep1_100_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH76_MNase_rep1_120_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH77_MNase_rep1_130_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH78_MNase_rep1_140_min.pkl')
+
+    pickle_paths_2 = (f'data/vit/cell_cycle/vit_imgs_24x128_DMAH82_MNase_rep2_0_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH83_MNase_rep2_10_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH84_MNase_rep2_20_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH85_MNase_rep2_30_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH86_MNase_rep2_40_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH87_MNase_rep2_50_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH88_MNase_rep2_60_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH89_MNase_rep2_70_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH90_MNase_rep2_80_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH91_MNase_rep2_90_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH92_MNase_rep2_100_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH94_MNase_rep2_120_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH95_MNase_rep2_130_min.pkl',
+                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH96_MNase_rep2_140_min.pkl')
+
+    rna_TPM_path = 'data/vit/cell_cycle_rna_TPM.csv'
+    vit_data = load_data(pickle_paths_1, pickle_paths_2, rna_TPM_path, replicate_mode)
+    return vit_data
+
+
+def load_data(pickle_paths_1, pickle_paths_2, rna_TPM_path, replicate_mode):
+    all_imgs_1, times, orfs, chrs, df = read_mnase_pickle(pickle_paths_1)
+    all_imgs_2, _, _, _, _ = read_mnase_pickle(pickle_paths_2)
+
+    # Merge the replicates
+    if replicate_mode == 'merge':
+        all_imgs = (all_imgs_1 + all_imgs_1)
+
+    # Treat replicates as separate channels
+    elif replicate_mode == 'channels':
+        all_imgs = np.concatenate([all_imgs_1, all_imgs_1], axis=1)
+
+    else:
+        raise ValueError(f"Unimplemented {replicate_mode}")
+
+    TPM = read_rna_TPM(rna_TPM_path, orfs, times)
+    vit_data = ViTData(all_imgs, orfs, chrs, times, TPM)
+
+    return vit_data
+
+
 def load_cd_data(file_prefix, replicate_mode='merge'):
+
+    TPM_path = 'data/vit/cd_rna_seq_TPM.csv'
 
     pickle_paths_1 = (f'data/vit/cd/{file_prefix}_DM498_MNase_rep1_0_min.pkl',
                     f'data/vit/cd/{file_prefix}_DM499_MNase_rep1_7.5_min.pkl',
@@ -137,24 +195,7 @@ def load_cd_data(file_prefix, replicate_mode='merge'):
                       f'data/vit/cd/{file_prefix}_DM508_MNase_rep2_60_min.pkl',
                       f'data/vit/cd/{file_prefix}_DM509_MNase_rep2_120_min.pkl')
 
-    all_imgs_1, times, orfs, chrs, df = read_mnase_pickle(pickle_paths_1)
-    all_imgs_2, _, _, _, _ = read_mnase_pickle(pickle_paths_2)
-
-    # Merge the replicates
-    if replicate_mode == 'merge':
-        all_imgs = (all_imgs_1 + all_imgs_1)
-
-    # Treat replicates as separate channels
-    elif replicate_mode == 'channels':
-        all_imgs = np.concatenate([all_imgs_1, all_imgs_1], axis=1)
-
-    else:
-        raise ValueError(f"Unimplemented {replicate_mode}")
-    
-    TPM = read_cd_rna_seq(orfs, times)
-
-    vit_data = ViTData(all_imgs, orfs, chrs, times, TPM)
-
+    vit_data = load_data(pickle_paths_1, pickle_paths_2, rna_TPM_path, replicate_mode)
     return vit_data
 
 

@@ -302,7 +302,7 @@ class ViTTrainer:
 
         with torch.no_grad():
             for imgs, tx, _, _, _ in dataloader:    
-                
+
                 out, weights = vit(imgs.float().to(self.device))
                 predictions = out.detach().to(torch.device('cpu')).numpy().flatten()    
                 tx = tx.to(torch.device('cpu'))
