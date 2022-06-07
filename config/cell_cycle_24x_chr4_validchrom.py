@@ -12,8 +12,8 @@ FORWARD_EXPANSION = 4
 
 SPLIT_TYPE = "chrom"
 SPLIT_ARG = 4
-VALIDATION_TYPE = "proportion"
-VALIDATION_ARG = 0.1
+VALIDATION_TYPE = "chrom"
+VALIDATION_ARG = 2
 
 CHANNEL_1 = None
 NETWORK = 'vit'
@@ -25,4 +25,4 @@ PERTURBATION_LOSS_LIM = 0.75
 DROPOUT = 0.05
 
 DATA_FUNC = 'load_cell_cycle_data'
-OUT_DIR = 'output/cell_cycle_24x128_chr4'
+OUT_DIR = 'output/cell_cycle_valid2_24x128_chr4'

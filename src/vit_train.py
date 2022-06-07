@@ -438,7 +438,8 @@ def main():
     dataset = getattr(vit_data_mod, config.DATA_FUNC)(replicate_mode=config.REPLICATE_MODE)
 
     dataloader = ViTDataLoader(dataset, batch_size=config.BATCH_SIZE, 
-        split_type=config.SPLIT_TYPE, split_arg=config.SPLIT_ARG)
+        split_type=config.SPLIT_TYPE, split_arg=config.SPLIT_ARG,
+        valid_type=config.VALIDATION_TYPE, valid_arg=config.VALIDATION_ARG)
     print_fl(f"Dataloader split: {dataloader.split_repr()}")
 
     # Initialize trainer

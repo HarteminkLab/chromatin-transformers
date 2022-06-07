@@ -8,7 +8,7 @@ import torch
 
 class ViTDataLoader:
 
-    def __init__(self, dataset, batch_size=64, split_type="chrom", split_arg=4):
+    def __init__(self, dataset, batch_size=64, split_type="chrom", split_arg=4, valid_type="proportion", valid_arg=0.1):
 
         # Load data
         self.dataset = dataset
@@ -17,9 +17,11 @@ class ViTDataLoader:
         self.split_arg = split_arg
 
         if split_type == 'chrom':
-            self.trainset, self.validationset, self.testset = testtrain_split_chrom(self.dataset, test_chrom=split_arg)
+            self.trainset, self.validationset, self.testset = testtrain_split_chrom(self.dataset, test_chrom=split_arg, 
+                valid_type=valid_type, valid_arg=valid_arg)
         elif split_type == 'time':
-            self.trainset, self.validationset, self.testset = testtrain_split_time(self.dataset, test_time=split_arg)
+            self.trainset, self.validationset, self.testset = testtrain_split_time(self.dataset, test_time=split_arg, 
+                valid_type=valid_type, valid_arg=valid_arg)
         else:
             raise ValueError("Invalid split type")
 
@@ -33,7 +35,25 @@ class ViTDataLoader:
                 f"Validation: {len(self.validationset)}; Testing: {len(self.testset)}")
 
 
-def testtrain_split_time(dataset, train_validation_split=0.9, test_time=120):
+def get_train_valid_indices(dataset, test_indices, trainvalid_indices, valid_type, valid_arg):
+
+    n = len(dataset)
+
+    # 90%/10% training, validation set
+    if valid_type == 'proportion':
+        train_validation_split = 1-valid_arg
+        num_training = int( * len(trainvalid_indices))
+        train_indices = np.array(sorted(np.random.choice(trainvalid_indices, size=num_training, replace=False)))
+        validation_indices = np.setdiff1d(trainvalid_indices, train_indices)
+    elif valid_type == 'chrom':
+        validation_indices = np.arange(n)[dataset.chrs == valid_arg]
+        train_indices = np.arange(n)[dataset.chrs != valid_arg]
+        train_indices = np.intersect1d(trainvalid_indices, train_indices)
+
+    return train_indices, validation_indices
+
+
+def testtrain_split_time(dataset, test_time=120, valid_type="proportion", valid_arg=0.1):
     """
     Split the dataset into train, validation, and test datasets
     """
@@ -41,12 +61,9 @@ def testtrain_split_time(dataset, train_validation_split=0.9, test_time=120):
     n = len(dataset)
 
     test_indices = np.arange(n)[dataset.times == test_time]
-    trainvalidation_idx = np.arange(n)[dataset.times != test_time]
+    trainvalid_indices = np.arange(n)[dataset.times != test_time]
 
-    # 90%/10% training, validation set
-    num_training = int(train_validation_split * len(trainvalidation_idx))
-    train_indices = np.array(sorted(np.random.choice(trainvalidation_idx, size=num_training, replace=False)))
-    validation_indices = np.setdiff1d(trainvalidation_idx, train_indices)
+    train_indices, validation_indices = get_train_valid_indices(dataset, test_indices, trainvalid_indices, valid_type, valid_arg)
 
     trainset = torch.utils.data.Subset(dataset, train_indices)
     validationset = torch.utils.data.Subset(dataset, validation_indices)
@@ -55,7 +72,7 @@ def testtrain_split_time(dataset, train_validation_split=0.9, test_time=120):
     return trainset, validationset, testset
 
 
-def testtrain_split_chrom(dataset, train_validation_split=0.9, test_chrom=4):
+def testtrain_split_chrom(dataset, test_chrom=4, valid_type="proportion", valid_arg=0.1):
     """
     Split the dataset into train, validation, and test datasets
     """
@@ -63,12 +80,9 @@ def testtrain_split_chrom(dataset, train_validation_split=0.9, test_chrom=4):
     n = len(dataset)
 
     test_indices = np.arange(n)[dataset.chrs == test_chrom]
-    trainvalidation_idx = np.arange(n)[dataset.chrs != test_chrom]
+    trainvalid_indices = np.arange(n)[dataset.chrs != test_chrom]
 
-    # 90%/10% training, validation set
-    num_training = int(train_validation_split * len(trainvalidation_idx))
-    train_indices = np.array(sorted(np.random.choice(trainvalidation_idx, size=num_training, replace=False)))
-    validation_indices = np.setdiff1d(trainvalidation_idx, train_indices)
+    train_indices, validation_indices = get_train_valid_indices(dataset, test_indices, trainvalid_indices, valid_type, valid_arg)
 
     trainset = torch.utils.data.Subset(dataset, train_indices)
     validationset = torch.utils.data.Subset(dataset, validation_indices)
