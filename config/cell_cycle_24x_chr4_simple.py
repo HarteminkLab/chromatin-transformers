@@ -1,0 +1,26 @@
+
+NUM_CLASSES = 1
+IN_CHANNELS = 1
+
+IMG_SIZE = (24, 128)
+BATCH_SIZE = 96
+PATCH_SIZE = 8
+EMB_SIZE = 16
+DEPTH = 8
+NUM_HEADS = 4
+FORWARD_EXPANSION = 2
+
+SPLIT_TYPE = "chrom"
+SPLIT_ARG = 4
+
+CHANNEL_1 = None
+NETWORK = 'vit'
+REPLICATE_MODE = 'merge'
+
+OPTIMIZER = "SGD"
+PERTURBATION = 5e-3
+PERTURBATION_LOSS_LIM = 0.75
+DROPOUT = 0.05
+
+DATA_FUNC = 'load_cell_cycle_data'
+OUT_DIR = 'output/cell_cycle_simple_24x128_chr4'
