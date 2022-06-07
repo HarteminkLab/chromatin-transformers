@@ -59,6 +59,7 @@ class ViTTrainer:
         self.lr = 0.001
         self.momentum = 0.9
         self.epochs = 100000
+        self.save_every = 200
 
     def setup(self):
 
@@ -179,7 +180,7 @@ class ViTTrainer:
                 torch.save(vit.state_dict(), model_path)
 
                 # Save intermediate model
-                if epoch % 2000 == 0 :
+                if epoch % self.save_every == 0 :
                    torch.save(vit.state_dict(), f"{model_path}.{epoch}")
 
                 epochs_arr.append(epoch)
