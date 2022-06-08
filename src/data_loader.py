@@ -39,16 +39,24 @@ def get_train_valid_indices(dataset, test_indices, trainvalid_indices, valid_typ
 
     n = len(dataset)
 
-    # 90%/10% training, validation set
+    # Randomly subset training set for validation
     if valid_type == 'proportion':
         train_validation_split = 1-valid_arg
         num_training = int( * len(trainvalid_indices))
         train_indices = np.array(sorted(np.random.choice(trainvalid_indices, size=num_training, replace=False)))
         validation_indices = np.setdiff1d(trainvalid_indices, train_indices)
+    # Subset training set by chromosome
     elif valid_type == 'chrom':
         validation_indices = np.arange(n)[dataset.chrs == valid_arg]
         train_indices = np.arange(n)[dataset.chrs != valid_arg]
         train_indices = np.intersect1d(trainvalid_indices, train_indices)
+    # Subset training set by time
+    elif valid_type == 'time':
+        validation_indices = np.arange(n)[dataset.times == valid_arg]
+        train_indices = np.arange(n)[dataset.times != valid_arg]
+        train_indices = np.intersect1d(trainvalid_indices, train_indices)
+    else:
+        raise ValueError(f"Unsupported validation {valid_type}")
 
     return train_indices, validation_indices
 
