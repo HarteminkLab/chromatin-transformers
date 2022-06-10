@@ -77,9 +77,8 @@ def load_cd_data_24x128(replicate_mode='merge'):
 
 
 def read_rna_TPM(TPM_path, orfs, times):    
-    tpm_df = read_orfs_data(TPM_path)
+    tpm_df = read_orfs_data(TPM_path, times=times)
     tpm_df = tpm_df.unstack().reset_index().rename(columns={'level_0': 'time', 0: 'TPM'})
-    tpm_df.time = tpm_df.time.astype('int')
     orfs_times = list(zip(orfs, times))
     tpm_df = tpm_df.set_index(['orf_name', 'time']).loc[orfs_times]
     TPM = tpm_df.TPM.values

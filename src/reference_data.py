@@ -5,7 +5,7 @@ import numpy as np
 from src.utils import print_fl
 
 
-def read_orfs_data(filename=None, index_name='orf_name'):
+def read_orfs_data(filename=None, index_name='orf_name', times=[0, 7.5, 15, 30, 60, 120]):
     """
     Load ORFs data set with time columns converting time columns from string
     to integers if necessary. Assumes file is a csv with columns. Assumes there
@@ -13,7 +13,6 @@ def read_orfs_data(filename=None, index_name='orf_name'):
     """
 
     data = pd.read_csv(filename).set_index(index_name)
-    times = [0, 7.5, 15, 30, 60, 120]
     
     non_time_cols = list(data.columns)
     int_time_cols = []
