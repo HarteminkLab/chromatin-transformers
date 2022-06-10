@@ -195,7 +195,7 @@ def load_cd_data(file_prefix, replicate_mode='merge'):
                       f'data/vit/cd/{file_prefix}_DM508_MNase_rep2_60_min.pkl',
                       f'data/vit/cd/{file_prefix}_DM509_MNase_rep2_120_min.pkl')
 
-    vit_data = load_data(pickle_paths_1, pickle_paths_2, rna_TPM_path, replicate_mode)
+    vit_data = load_data(pickle_paths_1, pickle_paths_2, TPM_path, replicate_mode)
     return vit_data
 
 
