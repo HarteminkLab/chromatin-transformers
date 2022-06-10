@@ -1,0 +1,28 @@
+
+NUM_CLASSES = 1
+IN_CHANNELS = 1
+
+IMG_SIZE = (24, 128)
+BATCH_SIZE = 96
+PATCH_SIZE = 8
+EMB_SIZE = 32
+DEPTH = 12
+NUM_HEADS = 4
+FORWARD_EXPANSION = 4
+
+SPLIT_TYPE = "proportion"
+SPLIT_ARG = 0.10
+VALIDATION_TYPE = "proportion"
+VALIDATION_ARG = 0.10
+
+CHANNEL_1 = None
+NETWORK = 'vit'
+REPLICATE_MODE = 'merge'
+
+OPTIMIZER = "SGD"
+PERTURBATION = 5e-3
+PERTURBATION_LOSS_LIM = 0.75
+DROPOUT = 0.05
+
+DATA_FUNC = 'load_cell_cycle_data'
+OUT_DIR = 'output/cell_cycle_24x128_random_orfs'

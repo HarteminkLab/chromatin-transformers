@@ -16,7 +16,10 @@ class ViTDataLoader:
         self.split_type = split_type
         self.split_arg = split_arg
 
-        if split_type == 'chrom':
+        if split_type == 'proportion':
+            self.trainset, self.validationset, self.testset = testtrain_split_prop(self.dataset, test_prop=split_arg, 
+                valid_type=valid_type, valid_arg=valid_arg)
+        elif split_type == 'chrom':
             self.trainset, self.validationset, self.testset = testtrain_split_chrom(self.dataset, test_chrom=split_arg, 
                 valid_type=valid_type, valid_arg=valid_arg)
         elif split_type == 'time':
@@ -41,10 +44,8 @@ def get_train_valid_indices(dataset, test_indices, trainvalid_indices, valid_typ
 
     # Randomly subset training set for validation
     if valid_type == 'proportion':
-        train_validation_split = 1-valid_arg
-        num_training = int( * len(trainvalid_indices))
-        train_indices = np.array(sorted(np.random.choice(trainvalid_indices, size=num_training, replace=False)))
-        validation_indices = np.setdiff1d(trainvalid_indices, train_indices)
+        validation_indices, train_indices = split_orfs_subset(dataset, valid_arg, trainvalid_indices)
+        pass
     # Subset training set by chromosome
     elif valid_type == 'chrom':
         validation_indices = np.arange(n)[dataset.chrs == valid_arg]
@@ -59,6 +60,44 @@ def get_train_valid_indices(dataset, test_indices, trainvalid_indices, valid_typ
         raise ValueError(f"Unsupported validation {valid_type}")
 
     return train_indices, validation_indices
+
+
+def testtrain_split_prop(dataset, test_prop=0.20, valid_type="proportion", valid_arg=0.1):
+    """
+    Split the dataset into train, validation, and test datasets based on proportion of randomly selected ORFs
+    """
+
+    n = len(dataset)
+    all_indices = np.arange(n)
+    test_indices, trainvalid_indices = split_orfs_subset(dataset, test_prop, all_indices)
+    train_indices, validation_indices = get_train_valid_indices(dataset, test_indices, trainvalid_indices, 
+        valid_type, valid_arg)
+
+    trainset = torch.utils.data.Subset(dataset, train_indices)
+    validationset = torch.utils.data.Subset(dataset, validation_indices)
+    testset = torch.utils.data.Subset(dataset, test_indices)
+
+    return trainset, validationset, testset
+
+
+def split_orfs_subset(dataset, proportion_1, indices_set):
+    """
+    Split a dataset by proportion on set of ORFs. Randomly select based on ORFs. Use indices_set if
+    subsetting entire dataset.
+    """
+
+    # Select the ORFs available to subselect
+    orfs_list = dataset.orfs[indices_set]
+    orfs_set = np.array(list(set(orfs_list)))
+    m = len(orfs_set)
+
+    num_split_1 = int(proportion_1 * m)
+    set_1_orfs = np.random.choice(orfs_set, size=num_split_1, replace=False)
+
+    set_1_indices = indices_set[[o in set_1_orfs for o in orfs_list]]
+    set_2_indices = indices_set[[o not in set_1_orfs for o in orfs_list]]
+
+    return set_1_indices, set_2_indices
 
 
 def testtrain_split_time(dataset, test_time=120, valid_type="proportion", valid_arg=0.1):
