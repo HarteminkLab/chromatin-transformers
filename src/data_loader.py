@@ -16,7 +16,10 @@ class ViTDataLoader:
         self.split_type = split_type
         self.split_arg = split_arg
 
-        if split_type == 'proportion':
+        if split_type == 'hybrid':
+            self.trainset, self.validationset, self.testset = testtrain_split_hybrid(self.dataset, test_prop=split_arg, 
+                valid_type=valid_type, valid_arg=valid_arg)
+        elif split_type == 'proportion':
             self.trainset, self.validationset, self.testset = testtrain_split_prop(self.dataset, test_prop=split_arg, 
                 valid_type=valid_type, valid_arg=valid_arg)
         elif split_type == 'chrom':
@@ -43,9 +46,8 @@ def get_train_valid_indices(dataset, test_indices, trainvalid_indices, valid_typ
     n = len(dataset)
 
     # Randomly subset training set for validation
-    if valid_type == 'proportion':
+    if valid_type == 'proportion' or valid_type == 'hybrid':
         validation_indices, train_indices = split_orfs_subset(dataset, valid_arg, trainvalid_indices)
-        pass
     # Subset training set by chromosome
     elif valid_type == 'chrom':
         validation_indices = np.arange(n)[dataset.chrs == valid_arg]
@@ -60,6 +62,31 @@ def get_train_valid_indices(dataset, test_indices, trainvalid_indices, valid_typ
         raise ValueError(f"Unsupported validation {valid_type}")
 
     return train_indices, validation_indices
+
+
+def testtrain_split_hybrid(dataset, test_prop=0.20, valid_type="hybrid", valid_arg=0.1):
+    """
+    Split the dataset into train, validation, and test datasets based on proportion of randomly selected ORFs
+    """
+
+    n = len(dataset)
+    all_indices = np.arange(n)
+
+    # Preserve timepoint zero for training
+    indices_zero = all_indices[dataset.times == 0]
+    indices_non_zero = all_indices[dataset.times != 0]
+
+    test_indices, trainvalid_indices = split_orfs_subset(dataset, test_prop, indices_non_zero)
+    train_indices, validation_indices = get_train_valid_indices(dataset, test_indices, trainvalid_indices, 
+        valid_type, valid_arg)
+
+    train_indices = np.concatenate([indices_zero, train_indices])
+
+    trainset = torch.utils.data.Subset(dataset, train_indices)
+    validationset = torch.utils.data.Subset(dataset, validation_indices)
+    testset = torch.utils.data.Subset(dataset, test_indices)
+
+    return trainset, validationset, testset
 
 
 def testtrain_split_prop(dataset, test_prop=0.20, valid_type="proportion", valid_arg=0.1):
@@ -110,7 +137,8 @@ def testtrain_split_time(dataset, test_time=120, valid_type="proportion", valid_
     test_indices = np.arange(n)[dataset.times == test_time]
     trainvalid_indices = np.arange(n)[dataset.times != test_time]
 
-    train_indices, validation_indices = get_train_valid_indices(dataset, test_indices, trainvalid_indices, valid_type, valid_arg)
+    train_indices, validation_indices = get_train_valid_indices(dataset, test_indices, trainvalid_indices, 
+        valid_type, valid_arg)
 
     trainset = torch.utils.data.Subset(dataset, train_indices)
     validationset = torch.utils.data.Subset(dataset, validation_indices)
@@ -129,7 +157,8 @@ def testtrain_split_chrom(dataset, test_chrom=4, valid_type="proportion", valid_
     test_indices = np.arange(n)[dataset.chrs == test_chrom]
     trainvalid_indices = np.arange(n)[dataset.chrs != test_chrom]
 
-    train_indices, validation_indices = get_train_valid_indices(dataset, test_indices, trainvalid_indices, valid_type, valid_arg)
+    train_indices, validation_indices = get_train_valid_indices(dataset, test_indices, trainvalid_indices, 
+        valid_type, valid_arg)
 
     trainset = torch.utils.data.Subset(dataset, train_indices)
     validationset = torch.utils.data.Subset(dataset, validation_indices)
