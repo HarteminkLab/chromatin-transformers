@@ -44,13 +44,15 @@ class ViTDataLoader:
                 f"Validation: {len(self.validationset)}; Testing: {len(self.testset)}")
 
     def save_indices(self, save_path):
-        test_indices = self.testloader.dataset.indices
-        train_indices = self.trainloader.dataset.indices
-        valid_indices = self.validationloader.dataset.indices
 
-        test_df = pd.DataFrame({'index': test_indices, 'set': 'test'})
-        train_df = pd.DataFrame({'index': train_indices, 'set': 'train'})
-        valid_df = pd.DataFrame({'index': valid_indices, 'set': 'validation'})
+        def _create_indices_df(dataset, name):
+            df = pd.DataFrame({'index': dataset.indices,
+                               'set': np.repeat(name, len(dataset))})
+            return df
+
+        test_df = _create_indices_df(self.testloader.dataset, 'test')
+        train_df = _create_indices_df(self.trainloader.dataset, 'train')
+        valid_df = _create_indices_df(self.validationloader.dataset, 'validation')
         indices_df = pd.concat([test_df, train_df, valid_df]).reset_index(drop=True)
         indices_df.to_csv(save_path)
 
