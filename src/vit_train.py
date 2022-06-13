@@ -59,7 +59,8 @@ class ViTTrainer:
         self.lr = 0.001
         self.momentum = 0.9
         self.epochs = 100000
-        self.save_every = 200
+        self.save_every = 100
+        self.save_every_long = 1000
 
     def setup(self):
 
@@ -179,8 +180,10 @@ class ViTTrainer:
 
                 torch.save(vit.state_dict(), model_path)
 
-                # Save intermediate model
-                if epoch % self.save_every == 0 :
+                # Save intermediate model, more frequently early on to capture
+                # validation loss minimum
+                if ((epoch % self.save_every == 0 and epoch < self.save_every_long) or 
+                    (epoch % self.save_every_long == 0 and epoch >= self.save_every_long)):
                    torch.save(vit.state_dict(), f"{model_path}.{epoch}")
 
                 epochs_arr.append(epoch)
@@ -384,7 +387,7 @@ def load_model_dir(model_dir):
     return vit, config
 
 
-def plot_loss_progress(loss_df, m):
+def plot_loss_progress(loss_df, m=50):
 
     def _get_ylim(data):
         data_min = data.min()
@@ -441,6 +444,9 @@ def main():
     dataloader = ViTDataLoader(dataset, batch_size=config.BATCH_SIZE, 
         split_type=config.SPLIT_TYPE, split_arg=config.SPLIT_ARG,
         valid_type=config.VALIDATION_TYPE, valid_arg=config.VALIDATION_ARG)
+    if not resume:
+        dataloader.save_indices(f"{trainer.out_dir}/indices.csv")
+
     print_fl(f"Dataloader split: {dataloader.split_repr()}")
 
     # Initialize trainer

@@ -3,6 +3,7 @@ import sys
 sys.path.append('.')
 
 import numpy as np
+import pandas as pd
 import torch
 
 
@@ -15,6 +16,8 @@ class ViTDataLoader:
 
         self.split_type = split_type
         self.split_arg = split_arg
+
+        np.random.seed(123)
 
         if split_type == 'hybrid':
             self.trainset, self.validationset, self.testset = testtrain_split_hybrid(self.dataset, test_prop=split_arg, 
@@ -40,6 +43,16 @@ class ViTDataLoader:
         return (f"Split: {self.split_type},{self.split_arg}; Training: {len(self.trainset)}; "
                 f"Validation: {len(self.validationset)}; Testing: {len(self.testset)}")
 
+    def save_indices(self, save_path):
+        test_indices = self.testloader.dataset.indices
+        train_indices = self.trainloader.dataset.indices
+        valid_indices = self.validationloader.dataset.indices
+
+        test_df = pd.DataFrame({'index': test_indices, 'set': 'test'})
+        train_df = pd.DataFrame({'index': train_indices, 'set': 'train'})
+        valid_df = pd.DataFrame({'index': valid_indices, 'set': 'validation'})
+        indices_df = pd.concat([test_df, train_df, valid_df]).reset_index(drop=True)
+        indices_df.to_csv(save_path)
 
 def get_train_valid_indices(dataset, test_indices, trainvalid_indices, valid_type, valid_arg):
 
