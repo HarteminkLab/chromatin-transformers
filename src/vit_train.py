@@ -444,8 +444,6 @@ def main():
     dataloader = ViTDataLoader(dataset, batch_size=config.BATCH_SIZE, 
         split_type=config.SPLIT_TYPE, split_arg=config.SPLIT_ARG,
         valid_type=config.VALIDATION_TYPE, valid_arg=config.VALIDATION_ARG)
-    if not resume:
-        dataloader.save_indices(f"{trainer.out_dir}/indices.csv")
 
     print_fl(f"Dataloader split: {dataloader.split_repr()}")
 
@@ -454,6 +452,9 @@ def main():
     trainer = ViTTrainer(vit, config_name, dataloader, resume=resume, resume_path=resume_path)
     trainer.setup()
     print_fl(f"Writing to {trainer.out_dir}")
+
+    if not resume:
+        dataloader.save_indices(f"{trainer.out_dir}/indices.csv")
 
     # Train
     print_fl("Training...")
