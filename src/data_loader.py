@@ -9,7 +9,8 @@ import torch
 
 class ViTDataLoader:
 
-    def __init__(self, dataset, batch_size=64, split_type="chrom", split_arg=4, valid_type="proportion", valid_arg=0.1):
+    def __init__(self, dataset, batch_size=64, split_type="chrom", split_arg=4, valid_type="proportion", valid_arg=0.1,
+                 indices_path=None):
 
         # Load data
         self.dataset = dataset
@@ -17,22 +18,33 @@ class ViTDataLoader:
         self.split_type = split_type
         self.split_arg = split_arg
 
-        np.random.seed(123)
+        if indices_path is None:
 
-        if split_type == 'hybrid':
-            self.trainset, self.validationset, self.testset = testtrain_split_hybrid(self.dataset, test_prop=split_arg, 
-                valid_type=valid_type, valid_arg=valid_arg)
-        elif split_type == 'proportion':
-            self.trainset, self.validationset, self.testset = testtrain_split_prop(self.dataset, test_prop=split_arg, 
-                valid_type=valid_type, valid_arg=valid_arg)
-        elif split_type == 'chrom':
-            self.trainset, self.validationset, self.testset = testtrain_split_chrom(self.dataset, test_chrom=split_arg, 
-                valid_type=valid_type, valid_arg=valid_arg)
-        elif split_type == 'time':
-            self.trainset, self.validationset, self.testset = testtrain_split_time(self.dataset, test_time=split_arg, 
-                valid_type=valid_type, valid_arg=valid_arg)
+            if split_type == 'hybrid':
+                self.trainset, self.validationset, self.testset = testtrain_split_hybrid(self.dataset, test_prop=split_arg, 
+                    valid_type=valid_type, valid_arg=valid_arg)
+            elif split_type == 'proportion':
+                self.trainset, self.validationset, self.testset = testtrain_split_prop(self.dataset, test_prop=split_arg, 
+                    valid_type=valid_type, valid_arg=valid_arg)
+            elif split_type == 'chrom':
+                self.trainset, self.validationset, self.testset = testtrain_split_chrom(self.dataset, test_chrom=split_arg, 
+                    valid_type=valid_type, valid_arg=valid_arg)
+            elif split_type == 'time':
+                self.trainset, self.validationset, self.testset = testtrain_split_time(self.dataset, test_time=split_arg, 
+                    valid_type=valid_type, valid_arg=valid_arg)
+            else:
+                raise ValueError("Invalid split type")
+
+        # Load existing indices path
         else:
-            raise ValueError("Invalid split type")
+            indices_df = pd.read_csv(indices_path)
+            train_indices = indices_df[indices_df['set'] == 'train']['index'].values
+            test_indices = indices_df[indices_df['set'] == 'test']['index'].values
+            validation_indices = indices_df[indices_df['set'] == 'validation']['index'].values
+
+            self.trainset = torch.utils.data.Subset(dataset, train_indices)
+            self.validationset = torch.utils.data.Subset(dataset, validation_indices)
+            self.testset = torch.utils.data.Subset(dataset, test_indices)
 
         # Load train loader
         self.trainloader = torch.utils.data.DataLoader(self.trainset, batch_size=batch_size)
@@ -54,7 +66,7 @@ class ViTDataLoader:
         train_df = _create_indices_df(self.trainloader.dataset, 'train')
         valid_df = _create_indices_df(self.validationloader.dataset, 'validation')
         indices_df = pd.concat([test_df, train_df, valid_df]).reset_index(drop=True)
-        indices_df.to_csv(save_path)
+        indices_df.to_csv(save_path, index=False)
 
 def get_train_valid_indices(dataset, test_indices, trainvalid_indices, valid_type, valid_arg):
 
@@ -133,6 +145,8 @@ def split_orfs_subset(dataset, proportion_1, indices_set):
     orfs_set = np.array(list(set(orfs_list)))
     m = len(orfs_set)
 
+    np.random.seed(123)
+            
     num_split_1 = int(proportion_1 * m)
     set_1_orfs = np.random.choice(orfs_set, size=num_split_1, replace=False)
 

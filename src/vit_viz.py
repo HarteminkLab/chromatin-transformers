@@ -382,12 +382,12 @@ def rollout(vit, img, discard_ratio=0.95, head_fusion='mean',
 
     out, attentions = vit(img.to(device))
 
-    if vit.in_channels == 1:
-        patch = vit.patches
-    elif vit.in_channels == 2:
-        assert attention_channel_idx is not None
-        patch = vit.patches[0]
-        attentions = attentions[attention_channel_idx]
+    # if vit.in_channels == 1:
+    #     patch = vit.patches
+    # elif vit.in_channels == 2:
+    assert attention_channel_idx is not None
+    patch = vit.patches[0]
+    attentions = attentions[attention_channel_idx]
 
     rows, cols = patch.patch_rows, patch.patch_cols
 

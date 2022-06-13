@@ -367,8 +367,8 @@ def get_device():
 
 def load_model_config(config, legacy=False):
 
-    from src.vit import ViT as ViT_legacy
-    from src.vit_2 import ViT
+    from src.vit_legacy import ViT as ViT_legacy
+    from src.vit import ViT
 
     if legacy:
         model_class = ViT_legacy
@@ -440,10 +440,17 @@ def main():
 
     # Dynamic load the correct data loading function
     dataset = getattr(vit_data_mod, config.DATA_FUNC)(replicate_mode=config.REPLICATE_MODE)
+    data_indices_path = f"{trainer.out_dir}/indices.csv"
 
-    dataloader = ViTDataLoader(dataset, batch_size=config.BATCH_SIZE, 
-        split_type=config.SPLIT_TYPE, split_arg=config.SPLIT_ARG,
-        valid_type=config.VALIDATION_TYPE, valid_arg=config.VALIDATION_ARG)
+    if not resume:
+        dataloader = ViTDataLoader(dataset, batch_size=config.BATCH_SIZE, 
+            split_type=config.SPLIT_TYPE, split_arg=config.SPLIT_ARG,
+            valid_type=config.VALIDATION_TYPE, valid_arg=config.VALIDATION_ARG)
+    else:
+        dataloader = ViTDataLoader(dataset, batch_size=config.BATCH_SIZE, 
+            split_type=config.SPLIT_TYPE, split_arg=config.SPLIT_ARG,
+            valid_type=config.VALIDATION_TYPE, valid_arg=config.VALIDATION_ARG,
+            indices_path=data_indices_path)
 
     print_fl(f"Dataloader split: {dataloader.split_repr()}")
 
@@ -454,7 +461,7 @@ def main():
     print_fl(f"Writing to {trainer.out_dir}")
 
     if not resume:
-        dataloader.save_indices(f"{trainer.out_dir}/indices.csv")
+        dataloader.save_indices(data_indices_path)
 
     # Train
     print_fl("Training...")

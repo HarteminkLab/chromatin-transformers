@@ -46,10 +46,10 @@ class PatchEmbedding(nn.Module):
         self.cls_token = nn.Parameter(torch.randn(1,1, emb_size))
 
         # Number of patches + CLS token
-        self.num_params = self.patch_rows*self.patch_cols+1
+        num_params = self.patch_rows*self.patch_cols+1
 
         # Position embeddings, add to each parameter
-        self.positions = nn.Parameter(torch.randn(self.num_params, emb_size))
+        self.positions = nn.Parameter(torch.randn(num_params, emb_size))
 
     def forward(self, x, **kwargs):
 
@@ -155,6 +155,7 @@ class TransformerEncoderBlock(nn.Module):
         self.feed_forward = FeedForwardBlock(emb_size,
             expansion=forward_expansion, drop_p=forward_drop_p)
 
+
     def forward(self, x, **kwargs):
         
         # Residually add the attention output
@@ -193,6 +194,7 @@ class TransformerEncoder(nn.Module):
                  forward_drop_p=forward_drop_p)
             self.layer.append(copy.deepcopy(layer))
 
+
     def forward(self, x, **kwargs):
         attn_weights = []
         for layer_block in self.layer:
@@ -202,44 +204,18 @@ class TransformerEncoder(nn.Module):
         return encoded, attn_weights
 
 
-class MergeHead(nn.Module):
-    def __init__(self, in_channels: int, num_params: int, emb_size: int, 
-        n_classes: int, depth: int = 4, drop_p: float = 0.):
-        super().__init__()
-
-        self.layers = nn.ModuleList()
-        # Number of images in batch, input channels, 
-        # number of parameters/patches, number of embeddings
-        self.rearrange = Rearrange('b i n e -> b (i n e)')
-
-        # Merge per channel layers into 1
-        layer = nn.Linear(in_channels*num_params*emb_size, emb_size)
-        self.layers.append(copy.deepcopy(layer))
-
-        # Forward through MLP
-        for _ in range(depth):
-            layer_norm = nn.LayerNorm(emb_size)
-            layer = nn.Linear(emb_size, emb_size)
-            self.layers.append(copy.deepcopy(layer_norm))
-            self.layers.append(copy.deepcopy(layer))
-
-        layer_norm = nn.LayerNorm(emb_size)
-        layer = nn.Linear(emb_size, n_classes)
-        self.layers.append(copy.deepcopy(layer_norm))
-        self.layers.append(copy.deepcopy(layer))
-
-    def forward(self, x, **kwargs):
-        x = self.rearrange(x)
-        for layer_block in self.layers:
-            x = layer_block(x)
-        return x
+class ClassificationHead(nn.Sequential):
+    def __init__(self, emb_size: int, n_classes: int):
+        super().__init__(
+            Reduce('b n e -> b e', reduction='mean'),
+            nn.LayerNorm(emb_size), 
+            nn.Linear(emb_size, n_classes))
 
 
 class ViT(nn.Module):
     def __init__(self, config, **kwargs):
         super().__init__()
 
-        self.config = config
         self.n_classes = config.NUM_CLASSES
         self.in_channels = config.IN_CHANNELS
         self.img_size = config.IMG_SIZE
@@ -251,29 +227,20 @@ class ViT(nn.Module):
         self.att_drop_p = config.DROPOUT
         self.forward_drop_p = config.DROPOUT
 
-        # Patch Embeddings and encoders per channel
-        self.patches = nn.ModuleList()
-        self.encoders = nn.ModuleList()
-        for _ in range(self.in_channels):
+        self.patches = PatchEmbedding(in_channels=self.in_channels,
+            patch_size=self.patch_size, 
+            img_size=self.img_size, 
+            emb_size=self.emb_size)
+        self.encoder = TransformerEncoder(emb_size=self.emb_size, 
+                                          num_heads=self.num_heads,
+                                          transformer_depth=self.transformer_depth, 
+                                          forward_expansion=self.forward_expansion,
+                                          att_drop_p=self.att_drop_p,
+                                          forward_drop_p=self.forward_drop_p,
+                                           **kwargs)
+        self.head = ClassificationHead(self.emb_size, self.n_classes)
+        self.config = config
 
-            patch = PatchEmbedding(in_channels=1,
-                patch_size=self.patch_size, 
-                img_size=self.img_size, 
-                emb_size=self.emb_size)
-            encoder = TransformerEncoder(emb_size=self.emb_size, 
-                                              num_heads=self.num_heads,
-                                              transformer_depth=self.transformer_depth, 
-                                              forward_expansion=self.forward_expansion,
-                                              att_drop_p=self.att_drop_p,
-                                              forward_drop_p=self.forward_drop_p,
-                                               **kwargs)
-            self.patches.append(copy.deepcopy(patch))
-            self.encoders.append(copy.deepcopy(encoder))
-
-        self.num_params = patch.num_params
-        self.merge_head = MergeHead(in_channels=self.in_channels,
-            n_classes=self.n_classes, num_params=self.num_params, 
-            emb_size=self.emb_size, depth=4, drop_p=self.forward_drop_p)
 
     def config_repr(self):
 
@@ -288,21 +255,9 @@ class ViT(nn.Module):
                 f"att_drop_p: {self.att_drop_p}\n"
                 f"forward_drop_p: {self.forward_drop_p}\n")
 
-    def forward(self, in_x, **kwargs):
+    def forward(self, x, **kwargs):
+        x = self.patches(x)
+        x, weights = self.encoder(x)
+        x = self.head(x)
+        return x, weights
 
-        # Matrix to hold output from each channel's network
-        device = next(self.patches[0].parameters()).device
-
-        out = torch.zeros((in_x.shape[0], self.in_channels, 
-            self.num_params, self.emb_size)).to(device)
-        out_weights = []
-
-        for i in range(self.in_channels):
-            x = self.patches[i](in_x[:, i:i+1])
-            x, weights = self.encoders[i](x)
-            out[:, i] = x
-            out_weights.append(weights)
-
-        # Merge the output from each channel's network
-        out = self.merge_head(out)
-        return out, out_weights

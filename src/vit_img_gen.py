@@ -83,8 +83,8 @@ class ViTImgGen:
             plt.yticks(len_cuts)
 
         def plot_len_cuts_scaled():
-            for y in np.arange(0, self.sublength_resize_height*(len(len_cuts)-1),
-                self.sublength_resize_height):
+
+            for y in np.arange(0, 12, 4):
                 plt.axhline(y, lw=1, c='gray', linestyle='dotted')
 
         def plot_xpatches():
@@ -184,18 +184,14 @@ def main():
     # Nucleosomal fragments: 130-200
     len_cuts = [30, 80, 130, 201]
 
-    # window = 1024 bp
-    # resize width = 128 pixels (x8 downscale)
-    # patch width = 8 pixels
-
-    # 128 / 8 = 16 column patches
-    # 1024 / 8 = 64 bp per patch
-    # 24x128 shaped images
+    cuts = len(len_cuts)-1 # 3
     window = 1024
-    patch_size = 8
+    
+    img_height = 96
+    img_width = 512
+
+    patch_size = img_height // cuts
     sublength_resize_height = patch_size # times 3 vertical patches of height
-    img_height = patch_size*(len(len_cuts)-1)
-    img_width = 128
 
     vit_gen = ViTImgGen(mnase, window, sublength_resize_height, len_cuts,
                         img_width, patch_size)

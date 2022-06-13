@@ -75,6 +75,9 @@ def load_cd_data_24x128(replicate_mode='merge'):
     file_prefix = "vit_imgs_24x128"
     return load_cd_data(file_prefix, replicate_mode)
 
+def load_cd_data_36x192(replicate_mode='merge'):
+    file_prefix = "vit_imgs_36x192"
+    return load_cd_data(file_prefix, replicate_mode)
 
 def read_rna_TPM(TPM_path, orfs, times):    
     tpm_df = read_orfs_data(TPM_path, times=times)
