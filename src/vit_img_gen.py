@@ -164,7 +164,7 @@ def subselect_resize(smoothed, len_subselect, resize_size):
 def main():
 
     if len(sys.argv) < 3:
-        raise ValueError("No BAM file specified")
+        raise ValueError("No BAM file or output directory specified")
 
     timer = Timer()
 

@@ -13,11 +13,15 @@ declare -a BAMFILES=("/usr/xtmp/tqtran/data/cd/mnase/DM498_MNase_rep1_0_min.bam"
 				 	 "/usr/xtmp/tqtran/data/cd/mnase/DM508_MNase_rep2_60_min.bam"
 				 	 "/usr/xtmp/tqtran/data/cd/mnase/DM509_MNase_rep2_120_min.bam")
 
+declare -a BAMFILES=("/usr/xtmp/tqtran/data/cd/mnase/DM498_MNase_rep1_0_min.bam")
+OUTDIR="vit/cd/96x512"
+
 i=1
 for BAM in ${BAMFILES[@]}; do
-    sbatch -D ./slurm-logs/ --job-name="vdat_$i" --export="PYFILE=src/vit_img_gen.py,ARGS=$BAM" scripts/cpu_job.sh
+    sbatch -D ./slurm-logs/ --job-name="vdat_$i" --export="PYFILE=src/vit_img_gen.py,ARGS=$BAM $OUTDIR" scripts/cpu_job.sh
     ((i=i+1))
 done
 
 #RNA_DIR="/usr/xtmp/tqtran/data/cd/rna/"
 #sbatch -D ./slurm-logs/ --job-name="vrna_$i" --export="PYFILE=src/vit_rna_gen.py,ARGS=$RNA_DIR" scripts/cpu_job.sh
+
