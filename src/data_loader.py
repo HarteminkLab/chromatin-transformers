@@ -142,7 +142,7 @@ def split_orfs_subset(dataset, proportion_1, indices_set):
 
     # Select the ORFs available to subselect
     orfs_list = dataset.orfs[indices_set]
-    orfs_set = np.array(list(set(orfs_list)))
+    orfs_set = np.array(list(set(orfs_list))).sort()
     m = len(orfs_set)
 
     num_split_1 = int(proportion_1 * m)
