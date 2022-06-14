@@ -156,15 +156,6 @@ def split_orfs_subset(dataset, proportion_1, indices_set):
 
     rng = np.random.default_rng(123)
     my_list = np.arange(10)
-    
-    print("Using random number generator object:", rng.choice(my_list, size=2))
-
-    np.random.seed(123)
-    print("Using default random seed:", np.random.choice(my_list, size=2))
-
-    print("Random ORFs:", set_1_orfs)
-
-    raise ValueError("TODO: Testing RNG ")
 
     return set_1_indices, set_2_indices
 
