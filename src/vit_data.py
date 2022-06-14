@@ -75,9 +75,11 @@ def load_cd_data_24x128(replicate_mode='merge'):
     file_prefix = "vit_imgs_24x128"
     return load_cd_data(file_prefix, replicate_mode)
 
-def load_cd_data_36x192(replicate_mode='merge'):
-    file_prefix = "vit_imgs_36x192"
-    return load_cd_data(file_prefix, replicate_mode)
+def load_cd_data_96x512(replicate_mode='merge'):
+    file_prefix = "vit_imgs_96x512"
+    directory='data/vit/cd/96x512'
+    return load_cd_data(file_prefix, replicate_mode, directory=directory)
+
 
 def read_rna_TPM(TPM_path, orfs, times):    
     tpm_df = read_orfs_data(TPM_path, times=times)
@@ -179,23 +181,23 @@ def load_data(pickle_paths_1, pickle_paths_2, rna_TPM_path, replicate_mode):
     return vit_data
 
 
-def load_cd_data(file_prefix, replicate_mode='merge'):
+def load_cd_data(file_prefix, replicate_mode='merge', directory='data/vit/cd'):
 
     TPM_path = 'data/vit/cd_rna_seq_TPM.csv'
 
-    pickle_paths_1 = (f'data/vit/cd/{file_prefix}_DM498_MNase_rep1_0_min.pkl',
-                    f'data/vit/cd/{file_prefix}_DM499_MNase_rep1_7.5_min.pkl',
-                    f'data/vit/cd/{file_prefix}_DM500_MNase_rep1_15_min.pkl',
-                    f'data/vit/cd/{file_prefix}_DM501_MNase_rep1_30_min.pkl',
-                    f'data/vit/cd/{file_prefix}_DM502_MNase_rep1_60_min.pkl',
-                    f'data/vit/cd/{file_prefix}_DM503_MNase_rep1_120_min.pkl')
+    pickle_paths_1 = (f'{directory}/{file_prefix}_DM498_MNase_rep1_0_min.pkl',
+                    f'{directory}/{file_prefix}_DM499_MNase_rep1_7.5_min.pkl',
+                    f'{directory}/{file_prefix}_DM500_MNase_rep1_15_min.pkl',
+                    f'{directory}/{file_prefix}_DM501_MNase_rep1_30_min.pkl',
+                    f'{directory}/{file_prefix}_DM502_MNase_rep1_60_min.pkl',
+                    f'{directory}/{file_prefix}_DM503_MNase_rep1_120_min.pkl')
 
-    pickle_paths_2 = (f'data/vit/cd/{file_prefix}_DM504_MNase_rep2_0_min.pkl',
-                      f'data/vit/cd/{file_prefix}_DM505_MNase_rep2_7.5_min.pkl',
-                      f'data/vit/cd/{file_prefix}_DM506_MNase_rep2_15_min.pkl',
-                      f'data/vit/cd/{file_prefix}_DM507_MNase_rep2_30_min.pkl',
-                      f'data/vit/cd/{file_prefix}_DM508_MNase_rep2_60_min.pkl',
-                      f'data/vit/cd/{file_prefix}_DM509_MNase_rep2_120_min.pkl')
+    pickle_paths_2 = (f'{directory}/{file_prefix}_DM504_MNase_rep2_0_min.pkl',
+                      f'{directory}/{file_prefix}_DM505_MNase_rep2_7.5_min.pkl',
+                      f'{directory}/{file_prefix}_DM506_MNase_rep2_15_min.pkl',
+                      f'{directory}/{file_prefix}_DM507_MNase_rep2_30_min.pkl',
+                      f'{directory}/{file_prefix}_DM508_MNase_rep2_60_min.pkl',
+                      f'{directory}/{file_prefix}_DM509_MNase_rep2_120_min.pkl')
 
     vit_data = load_data(pickle_paths_1, pickle_paths_2, TPM_path, replicate_mode)
     return vit_data
