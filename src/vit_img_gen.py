@@ -230,7 +230,7 @@ def main():
                  "lengths": vit_gen.len_span,
                  "orfs": saved_orfs}
 
-    savepath = f'data/vit/vit_imgs_{img_height}x{img_width}_{filename}.pkl'
+    savepath = f'{out_dir}/vit_imgs_{img_height}x{img_width}_{filename}.pkl'
     save_tuple = (desc_dict, imgs)
 
     write_pickle(save_tuple, savepath)
