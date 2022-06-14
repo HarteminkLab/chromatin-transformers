@@ -58,7 +58,7 @@ class ViTTrainer:
         self.stoploss_value = 1e-5
         self.lr = 0.001
         self.momentum = 0.9
-        self.epochs = 100000
+        self.epochs = 2000
         self.save_every = 100
         self.save_every_long = 1000
 
