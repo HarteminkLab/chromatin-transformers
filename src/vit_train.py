@@ -417,13 +417,13 @@ def plot_loss_progress(loss_df, m=50):
 
     plt.subplot(1, 3, 2)
     plt.plot(loss_df.epoch[-m:], loss_df.debug_train[-m:], label='Training loss')
-    plt.title(f"Training loss, {loss_df.debug_train.values[-1]:.8f}")
+    plt.title(f"Training loss, {loss_df.debug_train.values[-1]:.4f}")
     
     plt.subplot(1, 3, 3)
     plt.plot(loss_df.epoch[-m:], loss_df.debug_valid[-m:], label='Validation loss',
         c=plt.get_cmap('tab10')(1))
     
-    plt.title(f"Validation loss, {loss_df.debug_valid.values[-1]:.8f}")
+    plt.title(f"Validation loss, {loss_df.debug_valid.values[-1]:.4f}, (min={loss_df.debug_valid.values.min():.4f})")
     return fig
 
 
