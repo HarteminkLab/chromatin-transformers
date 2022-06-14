@@ -101,9 +101,12 @@ class ViTTrainer:
             print_fl(f"Resuming from {last_epoch}...")
 
         self.epochs_to_run = np.arange(last_epoch+1, last_epoch+self.epochs)
-        self.model_path = f"{self.out_dir}/model.torch"
+        self.model_save_path = f"{self.out_dir}/model.torch"
         self.loss_path = f"{self.out_dir}/loss.csv"
         self.loss_fig_path = f"{self.out_dir}/loss.png"
+        self.best_model_save_path = f"{self.out_dir}/model.best.torch"
+        self.min_validation_loss = float('inf')
+        self.min_validation_model = None
 
 
     def train(self):
@@ -119,8 +122,9 @@ class ViTTrainer:
         testloader = self.dataloader.testloader
         timer = self.timer
         config = self.config
-        model_path = self.model_path
+        model_save_path = self.model_save_path
         last_k_perturb = self.last_k_perturb
+        best_model_save_path = self.best_model_save_path
 
         debug_train = []
         debug_valid = []
@@ -174,17 +178,24 @@ class ViTTrainer:
 
                 validation_loss = self.compute_validation_loss(validationloader)
 
+                # Save min loss model
+                if validation_loss < self.min_validation_loss:
+                    pd.DataFrame({'epoch': [epoch]}).write_csv(f"{self.out_dir}/model.best.epoch.txt", index=False)
+                    torch.save(vit.state_dict(), best_model_save_path)
+                    self.min_validation_loss = validation_loss
+                    self.min_validation_model = vit.state_dict().copy()
+
                 perturb_str = "* Saddle conditions met! Perturbing model weights *" if is_perturb else ""
                 print_fl('[%d] train loss: %.5f, validation loss %.5f, %s %s' %
                       (epoch + 1, train_loss, validation_loss, timer.get_time(), perturb_str))
 
-                torch.save(vit.state_dict(), model_path)
+                torch.save(vit.state_dict(), model_save_path)
 
                 # Save intermediate model, more frequently early on to capture
                 # validation loss minimum
                 if ((epoch % self.save_every == 0 and epoch < self.save_every_long) or 
                     (epoch % self.save_every_long == 0 and epoch >= self.save_every_long)):
-                   torch.save(vit.state_dict(), f"{model_path}.{epoch}")
+                   torch.save(vit.state_dict(), f"{model_save_path}.{epoch}")
 
                 epochs_arr.append(epoch)
                 validation_losses.append(validation_loss)

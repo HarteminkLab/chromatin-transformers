@@ -170,7 +170,11 @@ def main():
 
     bam_file = sys.argv[1]
     out_dir = sys.argv[2]
-    filename = bam_file.split('/')[-1].split('.')[0]
+
+    # Adjust for 7.5 min period split
+    save_filename = save_filename.replace('7.5', '7_5')
+    save_filename = bam_file.split('/')[-1].split('.')[0]
+    save_filename = save_filename.replace('7_5', '7.5')
 
     mkdir_safe(out_dir)
 
@@ -230,7 +234,7 @@ def main():
                  "lengths": vit_gen.len_span,
                  "orfs": saved_orfs}
 
-    savepath = f'{out_dir}/vit_imgs_{img_height}x{img_width}_{filename}.pkl'
+    savepath = f'{out_dir}/vit_imgs_{img_height}x{img_width}_{save_filename}.pkl'
     save_tuple = (desc_dict, imgs)
 
     write_pickle(save_tuple, savepath)
