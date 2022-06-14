@@ -145,9 +145,9 @@ def split_orfs_subset(dataset, proportion_1, indices_set):
     orfs_set = np.array(list(set(orfs_list)))
     m = len(orfs_set)
 
-    np.random.seed(123)
-            
     num_split_1 = int(proportion_1 * m)
+    
+    np.random.seed(123)
     set_1_orfs = np.random.choice(orfs_set, size=num_split_1, replace=False)
 
     set_1_indices = indices_set[[o in set_1_orfs for o in orfs_list]]

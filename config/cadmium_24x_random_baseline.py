@@ -5,10 +5,10 @@ IN_CHANNELS = 1
 IMG_SIZE = (24, 128)
 BATCH_SIZE = 64
 PATCH_SIZE = 8
-EMB_SIZE = 4
-DEPTH = 2
-NUM_HEADS = 2
-FORWARD_EXPANSION = 2
+EMB_SIZE = 8
+DEPTH = 4
+NUM_HEADS = 4
+FORWARD_EXPANSION = 4
 
 SPLIT_TYPE = "proportion"
 SPLIT_ARG = 0.10
@@ -25,4 +25,4 @@ PERTURBATION_LOSS_LIM = 0.75
 DROPOUT = 0.05
 
 DATA_FUNC = 'load_cd_data_24x128'
-OUT_DIR = 'output/cadmium_24x128_random_orfs_simple'
+OUT_DIR = 'output/cadmium_24x128_random_orfs_baseline'
