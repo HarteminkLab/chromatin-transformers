@@ -179,15 +179,11 @@ class ViTTrainer:
                 validation_loss = self.compute_validation_loss(validationloader)
 
                 # Save min loss model
-                if validation_loss < self.min_validation_loss:
+                if not np.isnan(validation_loss) and validation_loss < self.min_validation_loss:
                     pd.DataFrame({'epoch': [epoch]}).to_csv(f"{self.out_dir}/model.best.epoch.txt", index=False)
                     torch.save(vit.state_dict(), best_model_save_path)
                     self.min_validation_loss = validation_loss
                     self.min_validation_model = vit.state_dict().copy()
-
-                perturb_str = "* Saddle conditions met! Perturbing model weights *" if is_perturb else ""
-                print_fl('[%d] train loss: %.5f, validation loss %.5f, %s %s' %
-                      (epoch + 1, train_loss, validation_loss, timer.get_time(), perturb_str))
 
                 torch.save(vit.state_dict(), model_save_path)
 
@@ -202,6 +198,10 @@ class ViTTrainer:
                 train_losses.append(train_loss)
 
                 self.compute_predictions_losses()
+
+                perturb_str = "* Saddle conditions met! Perturbing model weights *" if is_perturb else ""
+                print_fl('[%d] train loss: %.5f, test loss %.5f, %s %s' %
+                      (epoch + 1, self.train_loss, self.test_loss, timer.get_time(), perturb_str))
 
                 debug_train.append(self.train_loss)
                 debug_valid.append(self.validation_loss)
@@ -341,6 +341,9 @@ class ViTTrainer:
 
     def compute_validation_loss(self, dataloader, num_batches=-1):
 
+        if len(dataloader.dataset) == 0:
+            return np.nan
+
         device = self.device
         vit = self.vit
         
@@ -413,6 +416,7 @@ def plot_loss_progress(loss_df, m=50):
     plt.subplot(1, 3, 1)
     plt.plot(loss_df.epoch, loss_df.debug_train, label='Training loss')
     plt.plot(loss_df.epoch, loss_df.debug_valid, label='Validation loss')
+    plt.plot(loss_df.epoch, loss_df.debug_test, label='Test loss')
     plt.legend()
 
     plt.subplot(1, 3, 2)
@@ -420,10 +424,10 @@ def plot_loss_progress(loss_df, m=50):
     plt.title(f"Training loss, {loss_df.debug_train.values[-1]:.4f}")
     
     plt.subplot(1, 3, 3)
-    plt.plot(loss_df.epoch[-m:], loss_df.debug_valid[-m:], label='Validation loss',
+    plt.plot(loss_df.epoch[-m:], loss_df.debug_test[-m:], label='Test loss',
         c=plt.get_cmap('tab10')(1))
     
-    plt.title(f"Validation loss, {loss_df.debug_valid.values[-1]:.4f}, (min={loss_df.debug_valid.values.min():.4f})")
+    plt.title(f"Test loss, {loss_df.debug_test.values[-1]:.4f}, (min={loss_df.debug_test.values.min():.4f})")
     return fig
 
 
