@@ -180,7 +180,7 @@ class ViTTrainer:
 
                 # Save min loss model
                 if validation_loss < self.min_validation_loss:
-                    pd.DataFrame({'epoch': [epoch]}).write_csv(f"{self.out_dir}/model.best.epoch.txt", index=False)
+                    pd.DataFrame({'epoch': [epoch]}).to_csv(f"{self.out_dir}/model.best.epoch.txt", index=False)
                     torch.save(vit.state_dict(), best_model_save_path)
                     self.min_validation_loss = validation_loss
                     self.min_validation_model = vit.state_dict().copy()
