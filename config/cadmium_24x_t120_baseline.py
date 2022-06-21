@@ -10,8 +10,8 @@ DEPTH = 4
 NUM_HEADS = 4
 FORWARD_EXPANSION = 4
 
-SPLIT_TYPE = "proportion"
-SPLIT_ARG = 0.10
+SPLIT_TYPE = "time"
+SPLIT_ARG = 120
 VALIDATION_TYPE = "proportion"
 VALIDATION_ARG = 0.10
 
@@ -25,4 +25,4 @@ PERTURBATION_LOSS_LIM = 0.75
 DROPOUT = 0.05
 
 DATA_FUNC = 'load_cd_data_24x128'
-OUT_DIR = 'output/cadmium_24x128_random_orfs_baseline'
+OUT_DIR = 'output/cadmium_24x128_t120_baseline'
