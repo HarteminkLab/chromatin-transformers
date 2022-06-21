@@ -298,7 +298,8 @@ class ViTTrainer:
         self.plot_prediction_performance(self.train_tx, self.train_predictions, 'Train')
 
         plt.subplot(1, 3, 2)
-        self.plot_prediction_performance(self.validation_tx, self.validation_predictions, 'Validation')
+        if self.validation_tx is not None:
+            self.plot_prediction_performance(self.validation_tx, self.validation_predictions, 'Validation')
 
         plt.subplot(1, 3, 3)
         self.plot_prediction_performance(self.test_tx, self.test_predictions, 'Test')
@@ -307,6 +308,9 @@ class ViTTrainer:
 
 
     def generate_predicted_vs_true_data(self, dataloader, max_num=float('inf')):
+
+        if len(dataloader.dataset) == 0:
+            return None, None, np.nan, np.nan
 
         vit = self.vit
         device = self.device
