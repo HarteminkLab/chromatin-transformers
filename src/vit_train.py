@@ -26,6 +26,10 @@ from src.timer import Timer
 from src.utils import print_fl, mkdir_safe
 from sklearn.metrics import r2_score
 from src.plot_utils import plot_density_scatter
+from src.vit_viz import rollout, plot_gene_prediction
+from src.timer import Timer
+import numpy as np
+import torch
 
 
 class ViTTrainer:
@@ -373,6 +377,38 @@ class ViTTrainer:
         return running_loss / i
 
 
+    def compute_attentions(self):
+
+            timer = Timer()
+            vit_data = self.dataloader.dataset
+            vit = self.vit
+            n = len(vit_data)
+
+            collected_attentions = np.zeros((n, vit.patches.patch_rows, vit.patches.patch_cols))
+
+            i = 0
+            for cur_data in vit_data:
+
+                x = cur_data[0]
+
+                att_mask = rollout(vit, x, discard_ratio=0.95, head_fusion='mean', 
+                    device=torch.device('cpu'), attention_channel_idx=0)
+                collected_attentions[i] = att_mask
+                
+                timer.print_label(f"{i+1}/{n}", conditional=(i % 1000 == 0))
+
+                i += 1
+
+            self.collected_attentions = collected_attentions
+
+            return collected_attentions
+
+
+    def plot_gene(self, gene_name, time):
+        plot_gene_prediction(gene_name, time, self.vit, self.dataloader.dataset,
+            orf_plotter=self.orf_plotter, rna_plotter=self.rna_plotter)
+
+
 def get_device():
 
     if torch.cuda.is_available():
@@ -394,13 +430,15 @@ def load_model_config(config, legacy=False):
         model_class = ViT
 
     vit = model_class(config)
+    vit.legacy = legacy
+
     return vit
 
 
-def load_model_dir(model_dir):
+def load_model_dir(model_dir, legacy=False):
     config_path = f"{model_dir.replace('/', '.')}.config"
     config = importlib.import_module(config_path)
-    vit = load_model_config(config)
+    vit = load_model_config(config, legacy=legacy)
     vit.load_state_dict(torch.load(f"{model_dir}/model.torch", map_location=torch.device('cpu')))
     return vit, config
 

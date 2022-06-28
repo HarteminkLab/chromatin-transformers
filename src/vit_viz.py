@@ -61,7 +61,11 @@ def plot_gene_prediction(gene_name, time, vit, vit_data, orf_plotter=None, rna_p
         att_mask[att_mask < mask_ratio] = 0
 
         img_x = x[idx].cpu().detach().numpy()
+
+        if len(img_x.shape) == 3:
+            img_x = img_x[0]
         img_x = cv2.resize(img_x, (resize_size[1], resize_size[0]))
+
         #att_mask = cv2.resize(att_mask, (resize_size[1], resize_size[0]))
         return img_x, att_mask
 
@@ -121,8 +125,11 @@ def plot_gene_prediction(gene_name, time, vit, vit_data, orf_plotter=None, rna_p
         ax2.imshow(att_mask, extent=extent, origin='lower', cmap=color_map, vmin=0, vmax=1, 
             aspect='auto', alpha=0.75)
 
+    if vit.legacy:
+        img_x_chan1, att_mask_chan1 = get_img_and_mask(x, 0)
+    else:
+        img_x_chan1, att_mask_chan1 = get_img_and_mask(x[0], 0)
 
-    img_x_chan1, att_mask_chan1 = get_img_and_mask(x[0], 0)
     plot_hms((ax2, ax3, ax4), img_x_chan1, att_mask_chan1)
 
     if vit.in_channels == 2:
@@ -370,27 +377,29 @@ def visualize_attention(img, vit):
 
     return v, mask, result, ret_att_mat
 
+
 def rollout(vit, img, discard_ratio=0.95, head_fusion='mean', 
               device=torch.device('cpu'), attention_channel_idx=None):
     
+    # Add batch dimensions for vit
+    if img.dim() == 3:
+        img = img.unsqueeze(0)
+
     # Assert channels, height, width dimensions
-    assert img.dim() == 3
+    assert img.dim() == 4
     assert img.shape[0] == vit.in_channels
 
-    # Add batch dimensions for vit
-    img = img.unsqueeze(0)
+    out, attentions = vit(img.to(device).float())
 
-    out, attentions = vit(img.to(device))
-
-    # if vit.in_channels == 1:
-    #     patch = vit.patches
-    # elif vit.in_channels == 2:
     assert attention_channel_idx is not None
-    patch = vit.patches[0]
-    attentions = attentions[attention_channel_idx]
+
+    if vit.legacy:
+        patch = vit.patches
+    else:
+        patch = vit.patches[0]
+        attentions = attentions[attention_channel_idx]
 
     rows, cols = patch.patch_rows, patch.patch_cols
-
     result = torch.eye(attentions[0].size(-1)).to(device)
 
     with torch.no_grad():
