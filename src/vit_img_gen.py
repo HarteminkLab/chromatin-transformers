@@ -176,8 +176,8 @@ def main():
     out_dir = sys.argv[2]
 
     # Adjust for 7.5 min period split
-    save_filename = save_filename.replace('7.5', '7_5')
-    save_filename = bam_file.split('/')[-1].split('.')[0]
+    save_filename = bam_file.replace('7.5', '7_5')
+    save_filename = save_filename.split('/')[-1].split('.')[0]
     save_filename = save_filename.replace('7_5', '7.5')
 
     mkdir_safe(out_dir)
