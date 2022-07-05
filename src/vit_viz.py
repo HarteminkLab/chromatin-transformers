@@ -20,6 +20,25 @@ from sklearn.metrics import r2_score
 import matplotlib.patheffects as path_effects
 
 
+def plot_gene_tpm(gene_name, vit_data):
+
+    idx = vit_data.index_for(gene_name, time=0.0)
+    orf_name = vit_data.orfs[idx]
+
+    tpm_data = vit_data.read_log_tpm_data()
+
+    tpm_pts = tpm_data.loc[orf_name]
+    timepoints = tpm_pts.index.values
+    xpoints = np.arange(len(timepoints))
+
+    plt.figure(figsize=(5, 4))
+    ax = plt.gca()
+    ax.plot(xpoints, tpm_pts.values, marker='D', lw=2, c='purple')
+    ax.set_xticks(xpoints)
+    ax.set_xticklabels([f'{s:.0f}' if s != 7.5 else '7.5' for s in timepoints])
+    ax.set_ylim(0, 16)
+
+
 def plot_gene_prediction(gene_name, time, vit, vit_data, orf_plotter=None, rna_plotter=None,
     discard_ratio=0.95, mask_ratio=0.05, fusion='mean', smooth=False,
     device=torch.device('cpu')):
@@ -46,7 +65,8 @@ def plot_gene_prediction(gene_name, time, vit, vit_data, orf_plotter=None, rna_p
         out, weights = vit(x)
 
     tx = np.log2(vit_data.unscaled_TPM[idx]+1)
-    pred_tx = np.log2(vit_data.unscale_tx(out.to(torch.device('cpu'))).item()+1)
+    pred_tx = vit_data.unscale_log_tx(out.to(torch.device('cpu'))).item()
+
     extent = [span[0], span[1], 0, 256]
 
     title=f"{gene_name}, {str(t)}' True: {tx:.1f}, Pred: {pred_tx:.1f}"
@@ -75,9 +95,15 @@ def plot_gene_prediction(gene_name, time, vit, vit_data, orf_plotter=None, rna_p
     if orf_plotter is not None: orf_plotter.plot_orf_annotations(ax0, flip_genome=(gene.strand == '-'))
     ax0.set_xticks([])
 
-    if rna_plotter is not None: 
+    flip = (gene.strand == '-')
 
-        flip = (gene.strand == '-')
+
+    # TODO: parameterize
+    plot_bar_tx = True
+    plot_tx_type = 'bar'
+
+    if plot_tx_type == 'transcripts' and rna_plotter is not None: 
+    
         rna_plotter.plot(ax1, time, flip_genome=flip)
 
         negate_scalar = -1 if flip else 1
@@ -88,21 +114,28 @@ def plot_gene_prediction(gene_name, time, vit, vit_data, orf_plotter=None, rna_p
             mec=plt.get_cmap('Greens')(0.5),
             markersize=15)
 
-    # TODO: parameterize
-    plot_bar_tx = False
-    if plot_bar_tx:
-        ax1.axhline(tx, c='gray', linestyle='dashed', lw=1, zorder=1)
+    elif plot_tx_type == 'timecourse':
+
+        tpm_df = vit_data.read_log_tpm_data()
+        tpm_course = tpm_df.loc[gene.name]
+        print(tpm_course.index.values, tpm_course.values)
+        ax1.plot(tpm_course.index.values, tpm_course.values)
+        # ax1.xlim
+        pass
+
+    elif plot_tx_type == 'bar':
+        ax1.axhline(tx, c=plt.get_cmap('Reds')(0.2), linestyle='solid', lw=1, zorder=1)
 
         path_eff = [path_effects.Stroke(linewidth=2.5, foreground='white'),
                                        path_effects.Normal()]
 
-        ax1.bar(0, tx, width=0.25, color=plt.get_cmap('Greys')(0.5))
-        text = ax1.text(0, tx+0.5, f"True:\n{tx:.1f} Log-TPM", ha='center', 
+        ax1.bar(0, tx, width=0.25, color=plt.get_cmap('Reds')(0.5))
+        text = ax1.text(0, tx+0.5, f"True: {tx:.1f}", ha='center', 
             fontsize=12, zorder=10)
         text.set_path_effects(path_eff)
 
         ax1.bar(1, pred_tx, width=0.25, color=plt.get_cmap('Greens')(0.5))
-        text = ax1.text(1, pred_tx+0.5, f"Prediction:\n{pred_tx:.1f} Log-TPM", ha='center', 
+        text = ax1.text(1, pred_tx+0.5, f"Predicted: {pred_tx:.1f}", ha='center', 
             fontsize=12, zorder=10)
         text.set_path_effects(path_eff)
 
@@ -116,6 +149,11 @@ def plot_gene_prediction(gene_name, time, vit, vit_data, orf_plotter=None, rna_p
 
     def plot_hms(axs, img_x, att_mask):
         ax0, ax1, ax2 = axs
+
+        if flip:
+            img_x = np.flip(img_x, axis=1)
+            att_mask = np.flip(att_mask, axis=1)
+
         ax0.imshow(img_x, extent=extent, origin='lower', cmap='magma_r', vmin=-1, vmax=-0.25, 
             aspect='auto')
         ax1.imshow(att_mask, extent=extent, origin='lower', cmap='viridis', vmin=0, vmax=1, 
@@ -149,15 +187,21 @@ def plot_gene_prediction(gene_name, time, vit, vit_data, orf_plotter=None, rna_p
         ax.patch.set_alpha(0.0)
 
     ax1.set_ylabel("Transcripts\nlog-TPM", fontsize=18)
-    ax2.set_ylabel("Fragment\nlength (bp)", fontsize=18)
+    ax3.set_ylabel("Fragment length", fontsize=18)
+
+
+    ytick_step = 250//3
+    for ax in axs[2:5]:
+        ax.set_yticks(np.arange(ytick_step//2, 250, ytick_step))
+        ax.set_yticklabels(["Small", "Interm.", "Nucl."])
 
     if vit.in_channels == 1:
-        axs = [ax1, ax2, ax3, ax4]
+        axs = [ax0, ax1, ax2, ax3, ax4]
 
     for i in range(len(axs)):
         ax = axs[i]
         color = 'gray' if i in [0, 1, 2, 5] else '#dddddd'
-        ax.axvline(gene.TSS, lw=1, linestyle='dashed', c=color, alpha=1, zorder=10000)
+        ax.axvline(gene.TSS, lw=1, linestyle='dotted', c=color, alpha=1, zorder=10000)
         ax.set_xticks([])
 
     if vit.in_channels == 2:
@@ -225,9 +269,8 @@ def generate_predicted_vs_true_data(vit, vit_data, dataloader, max_num=float('in
         if max_num is not None and len(all_predictions) > max_num:
             break
 
-    mean, std = vit_data.transcription_unscaled.mean(), vit_data.transcription_unscaled.std()
     r2 = r2_score(all_tx, all_predictions)
-    y, x = all_tx*std+mean, all_predictions*std+mean
+    y, x = vit_data.unscale_log_tx(all_tx), vit_data.unscale_log_tx(all_predictions)
 
     return all_tx, all_predictions, x, y, r2
 
@@ -238,10 +281,11 @@ def plot_predicted_vs_true(vit, vit_data, testloader, max_num=float('inf'), titl
     all_tx, all_predictions, x, y, r2 = generate_predicted_vs_true_data(vit, 
         vit_data, testloader, max_num=max_num, device=device)
 
+def plot_scatter_predicted_true(x, y):
+
     ax = plt.gca()
 
     plot_density_scatter(x, y, cmap='Spectral_r', bw=(0.25, 0.25), zorder=2, ax=ax)
-    plot_rect(ax, -1, -1, 100, 100, 'white', fill_alpha=0.5, zorder=3)
 
     plt.plot([-20, 20], [-20, 20], c='black', linestyle='solid', lw=0.5, zorder=4)
 
@@ -253,10 +297,10 @@ def plot_predicted_vs_true(vit, vit_data, testloader, max_num=float('inf'), titl
     plt.ylabel('True log$_2$ transcript level, TPM')
     plt.xlabel('Predicted log$_2$ transcript level, TPM')
 
-    r2 = r2_score(all_tx, all_predictions)
-    plt.title(f"{title}, n={len(all_tx)}, $R^2$={r2:.3f}")
+    r2 = r2_score(x, y)
+    plt.title(f"n={len(x)}, $R^2$={r2:.3f}")
 
-    return r2
+    # return r2
 
 
 def plot_loss_progress(loss_df, m):

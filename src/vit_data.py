@@ -35,8 +35,8 @@ class ViTData(Dataset):
     def __getitem__(self, idx):
         return self.all_imgs[idx], self.TPM[idx], self.orfs[idx], self.chrs[idx], self.times[idx]
 
-    def unscale_tx(self, tx):
-        mean, std = self.unscaled_TPM.mean(), self.unscaled_TPM.std()
+    def unscale_log_tx(self, tx):
+        mean, std = np.log2(self.unscaled_TPM+1).mean(), np.log2(self.unscaled_TPM+1).std()
         return tx*std+mean
 
     def create_tpm_df(self):
@@ -55,6 +55,12 @@ class ViTData(Dataset):
 
         tpm_data = tpm_data.sort_values(120.0, ascending=False).join(orfs[['name']])
         return tpm_data
+
+    def read_log_tpm_data(self):
+        tpm_df = pd.DataFrame({'orf_name': self.orfs, 'tpm': self.unscaled_TPM, 'time': self.times})
+        tpm_df = tpm_df.pivot(index='orf_name', columns='time', values='tpm')
+        tpm_df = np.log2(tpm_df+1)
+        return tpm_df
 
     def index_for(self, gene_name, time):
         orf_name = self.orfs_data[(self.orfs_data['name'] == gene_name) |

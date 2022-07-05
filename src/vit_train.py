@@ -384,7 +384,7 @@ class ViTTrainer:
             vit = self.vit
             n = len(vit_data)
 
-            collected_attentions = np.zeros((n, vit.patches.patch_rows, vit.patches.patch_cols))
+            collected_attentions = np.zeros((n, vit.get_patch_rows(), vit.get_patch_columns()))
 
             i = 0
             for cur_data in vit_data:

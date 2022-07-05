@@ -275,6 +275,12 @@ class ViT(nn.Module):
             n_classes=self.n_classes, num_params=self.num_params, 
             emb_size=self.emb_size, depth=4, drop_p=self.forward_drop_p)
 
+    def get_patch_rows(self):
+        return self.patches[0].patch_rows
+
+    def get_patch_columns(self):
+        return self.patches[0].patch_cols
+
     def config_repr(self):
 
         return (f"n_classes: {self.n_classes}\n"

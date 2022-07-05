@@ -54,6 +54,10 @@ class ViTImgGen:
         span = gene.TSS-win_2, gene.TSS+win_2
         gene_mnase = filter_mnase(self.mnase, span[0], span[1], gene.chr)
 
+        # Flip the mnase if on crick
+        if gene.strand == '-':
+            gene_mnase.mid = -gene_mnase.mid
+
         img = exhaustive_counts(gene_mnase, 
                 (span[0], span[1]), len_span, x_key='mid', y_key='length')
 
@@ -191,8 +195,8 @@ def main():
     cuts = len(len_cuts)-1 # 3
     window = 1024
     
-    img_height = 96
-    img_width = 512
+    img_height = 24
+    img_width = 128
 
     patch_size = img_height // cuts
     sublength_resize_height = patch_size # times 3 vertical patches of height
