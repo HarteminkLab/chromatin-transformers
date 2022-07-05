@@ -79,7 +79,7 @@ def load_cd_data_12x64(replicate_mode='merge'):
 
 def load_cd_data_24x128(replicate_mode='merge'):
     file_prefix = "vit_imgs_24x128"
-    return load_cd_data(file_prefix, replicate_mode)
+    return load_cd_data(file_prefix, replicate_mode, directory='data/vit/cd/24x128')
 
 def load_cd_data_96x512(replicate_mode='merge'):
     file_prefix = "vit_imgs_96x512"
