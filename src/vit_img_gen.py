@@ -54,12 +54,12 @@ class ViTImgGen:
         span = gene.TSS-win_2, gene.TSS+win_2
         gene_mnase = filter_mnase(self.mnase, span[0], span[1], gene.chr)
 
-        # Flip the mnase if on crick
-        if gene.strand == '-':
-            gene_mnase.mid = -gene_mnase.mid
-
         img = exhaustive_counts(gene_mnase, 
                 (span[0], span[1]), len_span, x_key='mid', y_key='length')
+
+        # Flip the mnase around TSS if on Crick
+        if gene.strand == '-':
+            img[:] = np.flip(img.values, axis=1)
 
         # Smooth the source image
         kernel = normal_2d_kernel(5, 15, 20, 30)
@@ -205,6 +205,13 @@ def main():
                         img_width, patch_size)
     imgs = np.zeros((len(orfs), img_height, img_width))
     i = 0
+
+    print({"img_size": (img_height, img_width),
+                 "window": window,
+                 "length_cuts": len_cuts,
+                 "patch_size": patch_size,
+                 "img_height": img_height,
+                 "img_width": img_width})
 
     print("Generating MNase images...")
     saved_orfs = []
