@@ -97,7 +97,6 @@ def plot_gene_prediction(gene_name, time, vit, vit_data, orf_plotter=None, rna_p
 
     flip = (gene.strand == '-')
 
-
     # TODO: parameterize
     plot_bar_tx = True
     plot_tx_type = 'bar'
@@ -149,10 +148,6 @@ def plot_gene_prediction(gene_name, time, vit, vit_data, orf_plotter=None, rna_p
 
     def plot_hms(axs, img_x, att_mask):
         ax0, ax1, ax2 = axs
-
-        if flip:
-            img_x = np.flip(img_x, axis=1)
-            att_mask = np.flip(att_mask, axis=1)
 
         ax0.imshow(img_x, extent=extent, origin='lower', cmap='magma_r', vmin=-1, vmax=-0.25, 
             aspect='auto')
