@@ -102,30 +102,27 @@ class ViTImgGen:
             plt.xticks([])
             plt.ylim(20, 225)
 
-        plt.figure(figsize=(7, 6.25))
+        plt.figure(figsize=(5.5, 6))
 
         plt.subplot(4, 1, 1)
-        plot_img(img, extent=[-win_2, win_2, *len_span])
-        plot_len_cuts()
-        plot_xpatches()
-
-        plt.subplot(4, 1, 2)
         plot_img(smoothed, extent=[-win_2, win_2, *len_span])
         plot_len_cuts()
         plot_xpatches()
+        plt.ylim(30, 201)
+        plt.ylabel("Fragment\nlength, bp", fontsize=16, labelpad=10)
 
-        plt.subplot(4, 1, 3)
+        plt.subplot(4, 1, 2)
         plot_scaled(img_t, self.window)
-        plt.xticks([])
         plot_xpatches()
         plot_len_cuts_scaled()
 
-        plt.subplot(4, 1, 4)
-        rescaled_t = cv2.resize(img_t, (self.window, len_cuts[-1]-len_cuts[0]))
-        plot_scaled(rescaled_t, self.window)
-        plt.xticks(np.arange(-400, 600, 200))
-        plot_xpatches()
-        plot_len_cuts_scaled()
+        xticks = np.arange(-600, 600, 200)
+        xticklabels = [f'+{x}' if x > 0 else str(x) for x in xticks]
+        xticklabels = ['TSS' if x == '0' else str(x) for x in xticklabels]
+        plt.xticks(xticks, xticklabels)
+        plt.xlim(-512, 512)
+        plt.xlabel("Genomic position, bp", fontsize=16, labelpad=10)
+        plt.ylabel("Fragment\nclass", fontsize=16, labelpad=10)
 
 
 def subselect_resize(smoothed, len_subselect, resize_size):
@@ -155,7 +152,7 @@ def plot_scaled(scaled_img, window):
     plt.imshow(scaled_img, vmax=0.25, cmap='magma_r', origin='lower', aspect='auto',
            extent=[-win_2, win_2, 0, 12], interpolation='none')
 
-    plt.yticks([2, 6, 10], ['Small', 'Intermediate', 'Nucleosomal'])
+    plt.yticks([2, 6, 10], ['Small', 'Interm.', 'Nucleo.'])
     plt.ylim(0, 12)
 
 

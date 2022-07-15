@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --time=72:00:00
+#SBATCH --time=168:00:00
 #SBATCH --mem 200G
 #SBATCH --gres=gpu:1
 #SBATCH -p compsci-gpu

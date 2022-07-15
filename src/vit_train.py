@@ -247,12 +247,11 @@ class ViTTrainer:
 
     def plot_prediction_performance(self, all_tx, all_predictions, title, ax=None):
         
-        r2 = r2_score(all_tx, all_predictions)
-        
         unscaled_logTPM = np.log2(self.dataloader.dataset.unscaled_TPM+1)
-        mean, std = (unscaled_logTPM.mean(), 
-                     unscaled_logTPM.std())
-        x, y = all_predictions*std+mean, all_tx*std+mean
+        y = self.dataloader.dataset.unscale_log_tx(all_tx)
+        x = self.dataloader.dataset.unscale_log_tx(all_predictions)
+
+        r2 = r2_score(x, y)
 
         if ax is None:
             ax = plt.gca()
@@ -274,14 +273,24 @@ class ViTTrainer:
 
     def compute_predictions_losses(self, max_num=float('inf')):
 
+        timer = Timer()
+        print_fl("Computing test predictions", end='...')
         (self.test_tx, self.test_predictions, self.test_r2,
          self.test_loss) = self.generate_predicted_vs_true_data(self.dataloader.testloader, max_num)
+        print_fl(f"Done. {self.test_loss:.3f}, {self.test_r2:.3f}")
+        timer.print_time()
 
+        print_fl("Computing train predictions", end='...')
         (self.train_tx, self.train_predictions, self.train_r2,
          self.train_loss) = self.generate_predicted_vs_true_data(self.dataloader.trainloader, max_num)
+        print_fl(f"Done. {self.train_loss:.3f}, {self.train_r2:.3f}")
+        timer.print_time()
 
+        print_fl("Computing validation predictions", end='...')
         (self.validation_tx, self.validation_predictions, self.validation_r2, 
          self.validation_loss) = self.generate_predicted_vs_true_data(self.dataloader.validationloader, max_num)
+        print_fl(f"Done. {self.validation_loss:.3f}, {self.validation_r2:.3f}")
+        timer.print_time()
 
         perf_str = (f"Loss:\n"
                     f"  Train:\t{self.train_loss:.3f}\n  Valid:\t{self.validation_loss:.3f}"
@@ -342,7 +351,10 @@ class ViTTrainer:
                 if max_num is not None and len(all_predictions) > max_num:
                     break
 
-        r2 = r2_score(all_tx, all_predictions)
+        y = self.dataloader.dataset.unscale_log_tx(all_tx)
+        x = self.dataloader.dataset.unscale_log_tx(all_predictions)
+
+        r2 = r2_score(x, y)
 
         return all_tx, all_predictions, r2, (running_loss / i)
 
@@ -377,17 +389,27 @@ class ViTTrainer:
         return running_loss / i
 
 
-    def compute_attentions(self):
+    def compute_attentions(self, t=120):
 
             timer = Timer()
             vit_data = self.dataloader.dataset
             vit = self.vit
             n = len(vit_data)
 
-            collected_attentions = np.zeros((n, vit.get_patch_rows(), vit.get_patch_columns()))
+            # TODO: divide by number of samples
+            if t is None:
+                m = n
+            else:
+                m = n//6
+
+
+            collected_attentions = np.zeros((m, vit.get_patch_rows(), vit.get_patch_columns()))
 
             i = 0
             for cur_data in vit_data:
+
+                # Skip 
+                if (cur_data[-1] != t): continue
 
                 x = cur_data[0]
 
@@ -395,7 +417,7 @@ class ViTTrainer:
                     device=torch.device('cpu'), attention_channel_idx=0)
                 collected_attentions[i] = att_mask
                 
-                timer.print_label(f"{i+1}/{n}", conditional=(i % 1000 == 0))
+                timer.print_label(f"{i+1}/{m}", conditional=(i % 1000 == 0))
 
                 i += 1
 

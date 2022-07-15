@@ -276,7 +276,7 @@ def plot_predicted_vs_true(vit, vit_data, testloader, max_num=float('inf'), titl
     all_tx, all_predictions, x, y, r2 = generate_predicted_vs_true_data(vit, 
         vit_data, testloader, max_num=max_num, device=device)
 
-def plot_scatter_predicted_true(x, y):
+def plot_scatter_predicted_true(x, y, title):
 
     ax = plt.gca()
 
@@ -293,7 +293,8 @@ def plot_scatter_predicted_true(x, y):
     plt.xlabel('Predicted log$_2$ transcript level, TPM')
 
     r2 = r2_score(x, y)
-    plt.title(f"n={len(x)}, $R^2$={r2:.3f}")
+    # plt.title(f"n={len(x)}, $R^2$={r2:.3f}")
+    plt.title(f"{title}, n={len(x)}", fontsize=16)
 
     # return r2
 
