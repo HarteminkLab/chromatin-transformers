@@ -1,9 +1,14 @@
 # !/bin/bash
 
-NUM_RUNS=3
 
-for RUN in `seq $NUM_RUNS`; do 
-   sbatch -D ./slurm-logs/ --job-name=lr_$RUN \
-       --export="PYFILE=src/vit_train.py,ARGS=cd_24x_long_running" \
-       scripts/gpu_job.sh
-done
+sbatch -D ./slurm-logs/ --job-name=lr_$RUN \
+    --export="ARGS=output/cd_24x128_chr2_long_running_20220715_a100 resume" \
+    scripts/gpu_job.sh
+
+sbatch -D ./slurm-logs/ --job-name=lr_$RUN \
+    --export="ARGS=output/cd_24x128_chr2_long_running_20220715_b763 resume" \
+    scripts/gpu_job.sh
+
+sbatch -D ./slurm-logs/ --job-name=lr_$RUN \
+    --export="ARGS=output/cd_24x128_chr2_long_running_20220715_cb94 resume" \
+    scripts/gpu_job.sh
