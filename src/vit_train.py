@@ -130,9 +130,15 @@ class ViTTrainer:
         last_k_perturb = self.last_k_perturb
         best_model_save_path = self.best_model_save_path
 
-        debug_train = []
-        debug_valid = []
-        debug_test = []
+        if resume:
+            losses_df = pd.read_csv(f"{self.resume_path}/loss.csv")
+            debug_train = list(losses_df['debug_train'].values)
+            debug_valid = list(losses_df['debug_valid'].values)
+            debug_test = list(losses_df['debug_test'].values)
+        else:
+            debug_train = []
+            debug_valid = []
+            debug_test = []
 
         for epoch in self.epochs_to_run:
 
