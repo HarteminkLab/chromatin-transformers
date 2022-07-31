@@ -73,8 +73,14 @@ class ViTTrainer:
         config = self.config
         vit = self.vit
 
-        optimizer_name = config.OPTIMIZER
-        self.optimizer = optim.SGD(vit.parameters(), lr=self.lr, momentum=self.momentum)
+        # TODO: Switching to Adam
+        optimizer_name = 'Adam'
+        if optimizer_name == 'SGD':
+            self.optimizer = optim.SGD(vit.parameters(), lr=self.lr, momentum=self.momentum)
+        elif optimizer_name == 'Adam':
+            self.optimizer = optim.Adam(vit.parameters(), lr=0.001)
+        else:
+            raise ValueError(f"Invalid optimizer: {optimizer_name}")
 
         # Track progress
         if not self.resume:
