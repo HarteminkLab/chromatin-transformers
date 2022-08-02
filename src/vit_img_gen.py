@@ -197,10 +197,10 @@ def main():
     orfs = pd.read_csv('data/orfs_cd_paper_dataset.csv').set_index('orf_name')
 
     # Partitions lengths of fragments into equal sized (length-wise) patches
-    # Small fragments: 30-79
-    # Intermediate fragments: 80-129
-    # Nucleosomal fragments: 130-200
-    len_cuts = [30, 80, 130, 201]
+    # Small fragments: 45-89
+    # Intermediate fragments: 90-139
+    # Nucleosomal fragments: 140-200
+    len_cuts = [45, 90, 140, 201]
 
     cuts = len(len_cuts)-1 # 3
     window = 1024
