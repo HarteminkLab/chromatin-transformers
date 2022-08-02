@@ -23,6 +23,7 @@ from src.utils import print_fl, mkdir_safe
 from scipy.signal import convolve2d
 from src.find_small_plus1 import shift_for_p1
 
+
 class ViTImgGen:
 
     def __init__(self, mnase, window, sublength_resize_height, len_cuts, img_width, patch_size,

@@ -22,7 +22,6 @@ from src.chromatin import filter_mnase
 from src.utils import print_fl, mkdir_safe
 from scipy.signal import convolve2d
 
-from src.vit_img_gen import normal_2d_kernel
 
 def find_small_prom(cur_data, plot=True):
     
