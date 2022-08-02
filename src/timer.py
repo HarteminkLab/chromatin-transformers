@@ -31,8 +31,8 @@ class Timer:
             indentspace = ' ' * indent
             print_fl("%s%s - %s" % (indentspace, label, self.get_time()), end=end)
 
-    def print_progress(self, i, total, indent=0, conditional=True):
-        self.print_label(f"{i}/{total}", indent=indent, conditional=conditional)
+    def print_progress(self, i, total, indent=0, every=1):
+        self.print_label(f"{i}/{total}", indent=indent, conditional=(i % every == 0))
 
 
 class TimingContext(object):

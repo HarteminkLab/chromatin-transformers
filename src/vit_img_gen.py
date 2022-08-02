@@ -20,14 +20,17 @@ from src.read_bam import read_mnase_bam
 from src.utils import normal_2d_kernel
 from src.chromatin import filter_mnase
 from src.utils import print_fl, mkdir_safe
-
+from scipy.signal import convolve2d
+from src.find_small_plus1 import shift_for_p1
 
 class ViTImgGen:
 
-    def __init__(self, mnase, window, sublength_resize_height, len_cuts, img_width, patch_size):
+    def __init__(self, mnase, window, sublength_resize_height, len_cuts, img_width, patch_size,
+                 window_padding=160):
 
         self.mnase = mnase
         self.window = window
+        self.window_padding = window_padding
         self.sublength_resize_height = sublength_resize_height
         self.len_cuts = len_cuts
         self.img_width = img_width
@@ -41,8 +44,6 @@ class ViTImgGen:
 
     def get_mnase_img(self, gene):
 
-        from scipy.signal import convolve2d
-
         window = self.window 
         sublength_resize_height = self.sublength_resize_height 
         len_cuts = self.len_cuts 
@@ -51,7 +52,7 @@ class ViTImgGen:
 
         # Convert reads to a count matrix
         win_2 = window//2
-        span = gene.TSS-win_2, gene.TSS+win_2
+        span = gene.TSS-win_2-self.window_padding, gene.TSS+win_2+self.window_padding
         gene_mnase = filter_mnase(self.mnase, span[0], span[1], gene.chr)
 
         img = exhaustive_counts(gene_mnase, 
@@ -65,13 +66,20 @@ class ViTImgGen:
         kernel = normal_2d_kernel(5, 15, 20, 30)
         smoothed = convolve2d(img.loc[len_span[0]:len_span[1]], kernel, mode='same')
         lens = np.arange(len_span[0], len_span[1])
-        smoothed = pd.DataFrame(smoothed, index=lens, columns=np.arange(-win_2, win_2))
-        scaled_img, img_slices = partition_and_resize(smoothed, len_cuts, sublength_resize_height, 
+        smoothed_df = pd.DataFrame(smoothed, index=lens, 
+            columns=np.arange(-win_2-self.window_padding, win_2+self.window_padding))
+
+        # Find the enrichment of the +1 nucleosome and shift the data frame appropirately
+        # will also crop out the padding of the window
+        shifted = shift_for_p1(smoothed_df, self)
+        shifted_df = pd.DataFrame(shifted, index=lens, columns=np.arange(-win_2, win_2))
+
+        scaled_img, img_slices = partition_and_resize(shifted_df, len_cuts, sublength_resize_height, 
             img_width)
 
-        self.img, self.scaled_img, self.smoothed, self.img_slices = img, scaled_img, smoothed, img_slices
+        self.img, self.scaled_img, self.smoothed, self.img_slices = img, scaled_img, shifted_df, img_slices
 
-        return img, scaled_img, smoothed, img_slices
+        return img, scaled_img, shifted_df, img_slices
 
 
     def plot_resized_img(self):
