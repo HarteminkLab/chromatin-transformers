@@ -71,15 +71,19 @@ class ViTImgGen:
 
         # Find the enrichment of the +1 nucleosome and shift the data frame appropirately
         # will also crop out the padding of the window
-        shifted = shift_for_p1(smoothed_df, self)
+        shifted, p1_pos = shift_for_p1(smoothed_df, self)
         shifted_df = pd.DataFrame(shifted, index=lens, columns=np.arange(-win_2, win_2))
 
         scaled_img, img_slices = partition_and_resize(shifted_df, len_cuts, sublength_resize_height, 
             img_width)
 
-        self.img, self.scaled_img, self.smoothed, self.img_slices = img, scaled_img, shifted_df, img_slices
+        self.img = img
+        self.scaled_img = scaled_img
+        self.smoothed = shifted_df
+        self.img_slices = img_slices
+        self.p1_pos = p1_pos
 
-        return img, scaled_img, shifted_df, img_slices
+        return img, scaled_img, shifted_df, img_slices, p1_pos
 
 
     def plot_resized_img(self):
@@ -209,6 +213,7 @@ def main():
     vit_gen = ViTImgGen(mnase, window, sublength_resize_height, len_cuts,
                         img_width, patch_size)
     imgs = np.zeros((len(orfs), img_height, img_width))
+    p1_poses = np.zeros((len(orfs),))
     i = 0
 
     print({"img_size": (img_height, img_width),
@@ -231,8 +236,10 @@ def main():
 
             saved_orfs.append(orf_name)
             chroms.append(chrom)
-            img, img_t, smoothed, img_slices = vit_gen.get_mnase_img(orf)
+            img, img_t, smoothed, img_slices, p1_pos = vit_gen.get_mnase_img(orf)
             imgs[i] = img_t
+            p1_poses[i] = p1_pos
+
             i += 1
             
             timer.print_progress(i, len(orfs), conditional=(i % 100 == 0))
@@ -248,6 +255,7 @@ def main():
                  "img_width": img_width,
                  "chrs": chroms,
                  "lengths": vit_gen.len_span,
+                 "p1_poses": p1_poses,
                  "orfs": saved_orfs}
 
     savepath = f'{out_dir}/vit_imgs_{img_height}x{img_width}_{save_filename}.pkl'

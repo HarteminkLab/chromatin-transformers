@@ -106,6 +106,6 @@ def shift_for_p1(smoothed, vit_gen):
     shifted_img[:, selected_span[0]:selected_span[1]] = smoothed
     shifted_img_crop = shifted_img[:, padding*2:padding*2+vit_gen.window]
 
-    return shifted_img_crop
+    return shifted_img_crop, p1_pos
 
 
