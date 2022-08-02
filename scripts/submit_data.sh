@@ -13,7 +13,7 @@ declare -a BAMFILES=("/usr/xtmp/tqtran/data/cd/mnase/DM498_MNase_rep1_0_min.bam"
 				 	 "/usr/xtmp/tqtran/data/cd/mnase/DM508_MNase_rep2_60_min.bam"
 				 	 "/usr/xtmp/tqtran/data/cd/mnase/DM509_MNase_rep2_120_min.bam")
 
-OUTDIR="data/vit/cd/96x512"
+OUTDIR="data/vit/cd/24x128_p1"
 
 i=1
 for BAM in ${BAMFILES[@]}; do
