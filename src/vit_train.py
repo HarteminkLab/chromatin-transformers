@@ -73,8 +73,8 @@ class ViTTrainer:
         config = self.config
         vit = self.vit
 
-        # TODO: Switching to Adam
-        optimizer_name = 'Adam'
+        optimizer_name = config.OPTIMIZER
+
         if optimizer_name == 'SGD':
             self.optimizer = optim.SGD(vit.parameters(), lr=self.lr, momentum=self.momentum)
         elif optimizer_name == 'Adam':
