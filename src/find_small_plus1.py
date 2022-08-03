@@ -89,6 +89,11 @@ def find_p1(cur_data, nuc_len_span):
 
 
 def shift_for_p1(smoothed, vit_gen):
+
+    number_of_cols = (vit_gen.img_width // vit_gen.patch_size)
+    original_src_patch_width = vit_gen.window // number_of_cols
+    half_patch_shift = original_src_patch_width // 2
+
     nuc_len_span = vit_gen.len_cuts[-2], vit_gen.len_cuts[-1]
 
     # Find the +1 nucleosome in the nucleosome fragment length span
@@ -100,7 +105,8 @@ def shift_for_p1(smoothed, vit_gen):
     shifted_img = np.zeros((smoothed.shape[0], vit_gen.window+padding*4))
 
     # Place the data in the new index and crop to the appropriate window size
-    new_pos = padding-p1_pos
+    # Shift half a patch downstream so the +1 doesn't sit exactly between two patches
+    new_pos = padding-p1_pos+half_patch_shift
     selected_span = new_pos, (new_pos+smoothed.shape[1])
     shifted_img[:, selected_span[0]:selected_span[1]] = smoothed
     shifted_img_crop = shifted_img[:, padding*2:padding*2+vit_gen.window]

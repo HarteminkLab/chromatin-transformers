@@ -263,7 +263,7 @@ class ViTTrainer:
         y = self.dataloader.dataset.unscale_log_tx(all_tx)
         x = self.dataloader.dataset.unscale_log_tx(all_predictions)
 
-        r2 = r2_score(x, y)
+        r2 = r2_score(y, x)
 
         if ax is None:
             ax = plt.gca()
@@ -317,16 +317,12 @@ class ViTTrainer:
 
 
     def plot_predictions(self):
-        fig = plt.figure(figsize=(12, 3))
+        fig = plt.figure(figsize=(8, 3))
 
-        plt.subplot(1, 3, 1)
+        plt.subplot(1, 2, 1)
         self.plot_prediction_performance(self.train_tx, self.train_predictions, 'Train')
 
-        plt.subplot(1, 3, 2)
-        if self.validation_tx is not None:
-            self.plot_prediction_performance(self.validation_tx, self.validation_predictions, 'Validation')
-
-        plt.subplot(1, 3, 3)
+        plt.subplot(1, 2, 2)
         self.plot_prediction_performance(self.test_tx, self.test_predictions, 'Test')
 
         return fig
@@ -491,7 +487,6 @@ def plot_loss_progress(loss_df, m=50):
 
     plt.subplot(1, 3, 1)
     plt.plot(loss_df.epoch, loss_df.debug_train, label='Training loss')
-    plt.plot(loss_df.epoch, loss_df.debug_valid, label='Validation loss')
     plt.plot(loss_df.epoch, loss_df.debug_test, label='Test loss')
     plt.legend()
 

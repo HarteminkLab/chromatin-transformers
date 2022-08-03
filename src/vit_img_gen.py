@@ -78,6 +78,8 @@ class ViTImgGen:
         scaled_img, img_slices = partition_and_resize(shifted_df, len_cuts, sublength_resize_height, 
             img_width)
 
+        # Shift by half a patch
+
         self.img = img
         self.scaled_img = scaled_img
         self.smoothed = shifted_df
