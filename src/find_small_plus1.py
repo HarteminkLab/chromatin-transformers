@@ -100,17 +100,16 @@ def shift_for_p1(smoothed, vit_gen):
     p1_pos = find_p1(smoothed, nuc_len_span)
     padding = vit_gen.window_padding
 
-    # Shifted image has double the padding to allow for the placement
+    # Shifted image additional padding to allow for the placement
     # of the source data anywhere in the new image with indexing errors
-    shifted_img = np.zeros((smoothed.shape[0], vit_gen.window+padding*4))
+    shifted_img = np.zeros((smoothed.shape[0], vit_gen.window+padding*4+half_patch_shift*2))
 
     # Place the data in the new index and crop to the appropriate window size
     # Shift half a patch downstream so the +1 doesn't sit exactly between two patches
-    new_pos = padding-p1_pos+half_patch_shift
+    new_pos = (padding+half_patch_shift)-p1_pos+half_patch_shift
     selected_span = new_pos, (new_pos+smoothed.shape[1])
     shifted_img[:, selected_span[0]:selected_span[1]] = smoothed
-    shifted_img_crop = shifted_img[:, padding*2:padding*2+vit_gen.window]
+    shifted_img_crop = shifted_img[:, (padding*2+half_patch_shift):(padding*2+vit_gen.window+half_patch_shift)]
 
     return shifted_img_crop, p1_pos
-
 
