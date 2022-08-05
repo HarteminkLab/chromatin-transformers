@@ -31,14 +31,14 @@ declare -a BAMFILES=("/usr/xtmp/tqtran/data/cell_cycle/mnase/DMAH64_MNase_rep1_0
                      "/usr/xtmp/tqtran/data/cell_cycle/mnase/DMAH95_MNase_rep2_130_min.bam"
                      "/usr/xtmp/tqtran/data/cell_cycle/mnase/DMAH96_MNase_rep2_140_min.bam")
 
-OUT_DIR='data/vit/cell_cycle/'
+OUT_DIR='data/vit/cell_cycle_24x128_p1/'
 
-#i=1
-#for BAM in ${BAMFILES[@]}; do
-#    sbatch -D ./slurm-logs/ --job-name="vdat_$i" --export="PYFILE=src/vit_img_gen.py,ARGS=$BAM $OUT_DIR" scripts/cpu_job.sh
-#    ((i=i+1))
-#done
+i=1
+for BAM in ${BAMFILES[@]}; do
+   sbatch -D ./slurm-logs/ --job-name="cc_$i" --export="PYFILE=src/vit_img_gen.py,ARGS=$BAM $OUT_DIR" scripts/cpu_job.sh
+   ((i=i+1))
+done
 
-RNA_DIR="/usr/xtmp/tqtran/data/cell_cycle/rna/"
-sbatch -D ./slurm-logs/ --job-name="vrna_$i" --export="PYFILE=src/vit_rna_gen.py,ARGS=$RNA_DIR" scripts/cpu_job.sh
+#RNA_DIR="/usr/xtmp/tqtran/data/cell_cycle/rna/"
+#sbatch -D ./slurm-logs/ --job-name="vrna_$i" --export="PYFILE=src/vit_rna_gen.py,ARGS=$RNA_DIR" scripts/cpu_job.sh
 

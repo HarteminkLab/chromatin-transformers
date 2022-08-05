@@ -362,7 +362,7 @@ class ViTTrainer:
         y = self.dataloader.dataset.unscale_log_tx(all_tx)
         x = self.dataloader.dataset.unscale_log_tx(all_predictions)
 
-        r2 = r2_score(x, y)
+        r2 = r2_score(y, x)
 
         return all_tx, all_predictions, r2, (running_loss / i)
 

@@ -123,7 +123,7 @@ class ViTImgGen:
         plot_img(smoothed, extent=[-win_2, win_2, *len_span])
         plot_len_cuts()
         plot_xpatches()
-        plt.ylim(30, 201)
+        plt.ylim(45, 201)
         plt.ylabel("Fragment\nlength, bp", fontsize=16, labelpad=10)
 
         plt.subplot(4, 1, 2)
