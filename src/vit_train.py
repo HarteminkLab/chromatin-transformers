@@ -524,7 +524,7 @@ def main():
     print_fl("Loading data...")
 
     # Dynamic load the correct data loading function
-    dataset = getattr(vit_data_mod, config.DATA_FUNC)(channel_1=config.CHANNEL_1, 
+    dataset = getattr(vit_data_mod, config.DATA_FUNC)(channel_1_time=config.CHANNEL_1, 
         replicate_mode=config.REPLICATE_MODE, predict_tpm=config.PREDICT_TPM)
 
     if not resume:
