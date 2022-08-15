@@ -64,6 +64,7 @@ class AttentionAnalysis:
             quantiles = trainer.dataloader.dataset.read_log_tpm_data().loc[orfs_120[current_idx]].quantile(
                 [q0, q1, 0.5, q2, q3])
 
+            cl_df.loc[clus, 'cluster_original'] = clus
             cl_df.loc[clus, 'q0_120'] = quantiles[120.0][q0]
             cl_df.loc[clus, 'q25_120'] = quantiles[120.0][q2]
             cl_df.loc[clus, 'med_120'] = quantiles[120.0][0.5]
@@ -216,3 +217,56 @@ def plot_tpm_cluster_idx(trainer, orfs_120, current_idx):
     plt.xlim(0, 5)
     plt.ylabel("$\\log$ TPM")
 
+
+def plot_umap(vit_data, mapper, clus_labels, log_tpm, selected, hide_ticks=False):
+
+    idx_120 = np.arange(len(vit_data))[vit_data.times == 120]
+    orfs_120 = vit_data.orfs[idx_120]
+
+    contain = np.isin(orfs_120, selected)
+    selected_idx = np.arange(len(orfs_120))[contain]
+
+    mapper_x = mapper.embedding_[:, 0]
+    mapper_y = mapper.embedding_[:, 1]
+
+    plt.figure(figsize=(6, 6))
+    plt.scatter(mapper_x, mapper_y, s=15, facecolor='none', 
+                c='#dddddd', zorder=1)
+    plt.scatter(mapper_x, mapper_y, s=10, edgecolor='none', 
+                c=clus_labels, cmap='Spectral', alpha=1., zorder=2)
+    plt.scatter(mapper_x[contain], mapper_y[contain], s=40, marker='D', 
+                facecolor='none', edgecolor='black', alpha=1., zorder=3)
+    plt.xticks([])
+    plt.yticks([])
+    plt.title("UMAP embeddings of t=120 attentions colored by cluster labels (k=16)")
+
+    bbox = plt.gca().get_window_extent()
+    cax = plt.axes([0.95, 0.125, 0.015, 0.755])
+    cax.yaxis.tick_right()
+
+    cax.imshow(np.arange(16).reshape(16, 1), extent=[0, 1, 0, 16], zorder=100, cmap='Spectral_r', aspect='auto')
+    cax.set_yticks(np.arange(16)+0.5)
+    cax.set_yticklabels(np.arange(16)+1)
+    cax.set_xticks([])
+
+    plt.figure(figsize=(7.5, 6))
+    plt.title("UMAP embeddings of t=120 attentions colored by log2 Transcript level")
+    plt.scatter(mapper.embedding_[:, 0], mapper.embedding_[:, 1], s=15, facecolor='none', 
+                c='#dddddd', zorder=1)
+    plot_data = pd.DataFrame(data={'x':mapper.embedding_[:, 0], 
+                       'y':mapper.embedding_[:, 1],
+                       'tpm':log_tpm})
+    plot_data = plot_data.sort_values('tpm')
+    plt.scatter(plot_data.x, plot_data.y, s=10, edgecolor='none', 
+                c=plot_data.tpm, cmap='viridis', vmin=5, vmax=12, alpha=1., zorder=2)
+    plt.colorbar()
+    plt.scatter(mapper_x[contain], mapper_y[contain], s=60, marker='D', 
+                    facecolor='none', edgecolor='red', alpha=0.75, zorder=3)
+
+    if hide_ticks:
+        plt.xticks([])
+        plt.yticks([])
+
+    for i in range(0, 14, 1):
+        plt.axvline(i, c='#ddd', lw=1, zorder=1, linestyle='dotted')
+        plt.axhline(i, c='#ddd', lw=1, zorder=1, linestyle='dotted')

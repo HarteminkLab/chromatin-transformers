@@ -410,14 +410,13 @@ class ViTTrainer:
             else:
                 m = n//6
 
-
             collected_attentions = np.zeros((m, vit.get_patch_rows(), vit.get_patch_columns()))
 
             i = 0
             for cur_data in vit_data:
 
                 # Skip 
-                if (cur_data[-1] != t): continue
+                if (t is not None) and (cur_data[-1] != t): continue
 
                 x = cur_data[0]
 
@@ -525,7 +524,8 @@ def main():
     print_fl("Loading data...")
 
     # Dynamic load the correct data loading function
-    dataset = getattr(vit_data_mod, config.DATA_FUNC)(replicate_mode=config.REPLICATE_MODE)
+    dataset = getattr(vit_data_mod, config.DATA_FUNC)(replicate_mode=config.REPLICATE_MODE,
+        predict_tpm=config.PREDICT_TPM)
 
     if not resume:
         dataloader = ViTDataLoader(dataset, batch_size=config.BATCH_SIZE, 

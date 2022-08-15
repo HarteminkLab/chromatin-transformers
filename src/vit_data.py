@@ -16,7 +16,7 @@ from sklearn.preprocessing import scale
 
 class ViTData(Dataset):
 
-    def __init__(self, all_imgs, orfs, chrs, times, TPM):
+    def __init__(self, all_imgs, orfs, chrs, times, TPM, predict_tpm):
 
         (self.all_imgs, self.orfs, self.chrs, self.times, 
          self.TPM) = all_imgs, orfs, chrs, times, TPM
@@ -25,7 +25,18 @@ class ViTData(Dataset):
 
         self.orfs_data = read_orfs_data('data/orfs_cd_paper_dataset.csv')
         self.unscaled_TPM = TPM
-        self.TPM = scale(np.log2(self.TPM+1).astype('float')).astype('float')
+        self.predict_tpm = predict_tpm
+
+        # Predict absolute expression level
+        if predict_tpm == 'absolute':
+            self.TPM = scale(np.log2(self.TPM+1).astype('float')).astype('float')
+        # Predict logfold change in expression
+        elif predict_tpm == 'logfold':
+            logfold_TPM = self.read_logfold_tpm_data(flatten=True)
+            self.TPM = scale(logfold_TPM.astype('float')).astype('float')
+        else:
+            raise ValueError(f"Unsupported TPM prediction {predict_tpm}")
+
         self.original_imgs = self.all_imgs.copy()
         self.all_imgs = img_transform(torch.tensor(self.all_imgs))
     
@@ -39,58 +50,56 @@ class ViTData(Dataset):
         mean, std = np.log2(self.unscaled_TPM+1).mean(), np.log2(self.unscaled_TPM+1).std()
         return tx*std+mean
 
-    def create_tpm_df(self):
-        data_df = pd.DataFrame({
-            'orf_name': self.dataloader.dataset.orfs,
-            'time': self.dataloader.dataset.times,
-            'chr': self.dataloader.dataset.chrs,
-            'TPM': self.dataloader.dataset.unscaled_TPM,
-        })
-        orfs = read_orfs_data('data/orfs_cd_paper_dataset.csv')
-
-        tpm_data = data_df.pivot(index='orf_name', values='TPM', columns='time')
-        tpm_0 = tpm_data[0.0].copy()
-        for time in tpm_data.columns:
-            tpm_data[time] = np.log2((tpm_data[time]+1) / (tpm_0+1))
-
-        tpm_data = tpm_data.sort_values(120.0, ascending=False).join(orfs[['name']])
-        return tpm_data
-
-    def read_log_tpm_data(self):
+    def read_tpm_data(self):
         tpm_df = pd.DataFrame({'orf_name': self.orfs, 'tpm': self.unscaled_TPM, 'time': self.times})
         tpm_df = tpm_df.pivot(index='orf_name', columns='time', values='tpm')
-        tpm_df = np.log2(tpm_df+1)
+        return tpm_df
+
+    def read_log_tpm_data(self, flatten=False):
+        tpm_df = self.read_tpm_data()
+        tpm_df = np.log2(tpm_df.loc[self.orfs_data.index.values]+1)
+        if flatten:
+            return tpm_df.values.reshape(-1, order='F')
+        return tpm_df
+
+    def read_logfold_tpm_data(self, flatten=False):
+        tpm_df = self.read_tpm_data()
+        tpm_0 = tpm_df[0.0].copy()
+        for time in tpm_df.columns:
+            tpm_df[time] = np.log2((tpm_df[time]+1) / (tpm_0+1))
+        tpm_df = tpm_df.loc[self.orfs_data.index.values]
+        if flatten:
+            return tpm_df.values.reshape(-1, order='F')
+
         return tpm_df
 
     def index_for(self, gene_name, time):
         orf_name = self.orfs_data[(self.orfs_data['name'] == gene_name) |
                              (self.orfs_data.index == gene_name)].index.values[0]
-
         index = np.arange(len(self))[(self.orfs == orf_name) & 
                                        (self.times == time)][0]
-
         return index
 
 
-def load_cd_data_12x64(replicate_mode='merge'):
+def load_cd_data_12x64(replicate_mode, predict_tpm):
     file_prefix = "vit_imgs_12x64"
-    return load_cd_data(file_prefix, replicate_mode)
+    return load_cd_data(file_prefix, replicate_mode, predict_tpm)
 
 
-def load_cd_data_24x128(replicate_mode='merge'):
+def load_cd_data_24x128(replicate_mode, predict_tpm):
     file_prefix = "vit_imgs_24x128"
-    return load_cd_data(file_prefix, replicate_mode, directory='data/vit/cd/24x128')
+    return load_cd_data(file_prefix, replicate_mode, predict_tpm, directory='data/vit/cd/24x128')
 
 
-def load_cd_data_24x128_p1(replicate_mode='merge'):
+def load_cd_data_24x128_p1(replicate_mode, predict_tpm):
     file_prefix = "vit_imgs_24x128"
-    return load_cd_data(file_prefix, replicate_mode, directory='data/vit/cd/24x128_p1')
+    return load_cd_data(file_prefix, replicate_mode, predict_tpm, directory='data/vit/cd/24x128_p1')
 
 
-def load_cd_data_96x512(replicate_mode='merge'):
+def load_cd_data_96x512(replicate_mode, predict_tpm):
     file_prefix = "vit_imgs_96x512"
     directory='data/vit/cd/96x512'
-    return load_cd_data(file_prefix, replicate_mode, directory=directory)
+    return load_cd_data(file_prefix, replicate_mode, predict_tpm, directory=directory)
 
 
 def read_rna_TPM(TPM_path, orfs, times):    
@@ -172,7 +181,7 @@ def load_cell_cycle_data(replicate_mode='merge'):
     return vit_data
 
 
-def load_data(pickle_paths_1, pickle_paths_2, rna_TPM_path, replicate_mode):
+def load_data(pickle_paths_1, pickle_paths_2, rna_TPM_path, replicate_mode, predict_tpm):
     all_imgs_1, times, orfs, chrs, df = read_mnase_pickle(pickle_paths_1)
     all_imgs_2, _, _, _, _ = read_mnase_pickle(pickle_paths_2)
 
@@ -188,12 +197,12 @@ def load_data(pickle_paths_1, pickle_paths_2, rna_TPM_path, replicate_mode):
         raise ValueError(f"Unimplemented {replicate_mode}")
 
     TPM = read_rna_TPM(rna_TPM_path, orfs, times)
-    vit_data = ViTData(all_imgs, orfs, chrs, times, TPM)
+    vit_data = ViTData(all_imgs, orfs, chrs, times, TPM, predict_tpm)
 
     return vit_data
 
 
-def load_cd_data(file_prefix, replicate_mode='merge', directory='data/vit/cd'):
+def load_cd_data(file_prefix, replicate_mode, predict_tpm, directory='data/vit/cd'):
 
     TPM_path = 'data/vit/cd_rna_seq_TPM.csv'
 
@@ -211,7 +220,7 @@ def load_cd_data(file_prefix, replicate_mode='merge', directory='data/vit/cd'):
                       f'{directory}/{file_prefix}_DM508_MNase_rep2_60_min.pkl',
                       f'{directory}/{file_prefix}_DM509_MNase_rep2_120_min.pkl')
 
-    vit_data = load_data(pickle_paths_1, pickle_paths_2, TPM_path, replicate_mode)
+    vit_data = load_data(pickle_paths_1, pickle_paths_2, TPM_path, replicate_mode, predict_tpm)
     return vit_data
 
 

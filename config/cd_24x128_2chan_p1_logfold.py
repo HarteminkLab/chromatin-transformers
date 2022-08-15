@@ -1,6 +1,6 @@
 
 NUM_CLASSES = 1
-IN_CHANNELS = 1
+IN_CHANNELS = 2
 
 IMG_SIZE = (24, 128)
 BATCH_SIZE = 96
@@ -15,9 +15,10 @@ SPLIT_ARG = 120
 VALIDATION_TYPE = "proportion"
 VALIDATION_ARG = 0.0
 
-CHANNEL_1 = None
+CHANNEL_1 = 0
 NETWORK = 'vit'
 REPLICATE_MODE = 'merge'
+PREDICT_TPM = 'logfold'
 
 OPTIMIZER = "SGD"
 PERTURBATION = 5e-3
@@ -25,4 +26,4 @@ PERTURBATION_LOSS_LIM = 0.75
 DROPOUT = 0.05
 
 DATA_FUNC = 'load_cd_data_24x128_p1'
-OUT_DIR = 'output/cd_24x128_p1_more_complex'
+OUT_DIR = 'output/cd_24x128_2chan_p1_logfold'
