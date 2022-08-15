@@ -16,7 +16,7 @@ from sklearn.preprocessing import scale
 
 class ViTData(Dataset):
 
-    def __init__(self, all_imgs, orfs, chrs, times, TPM, predict_tpm):
+    def __init__(self, all_imgs, orfs, chrs, times, TPM, channel_1_time, predict_tpm):
 
         (self.all_imgs, self.orfs, self.chrs, self.times, 
          self.TPM) = all_imgs, orfs, chrs, times, TPM
@@ -39,7 +39,40 @@ class ViTData(Dataset):
 
         self.original_imgs = self.all_imgs.copy()
         self.all_imgs = img_transform(torch.tensor(self.all_imgs))
-    
+
+        if channel_1_time is not None:
+            self.transform_data(channel_1_time)
+
+    def transform_data(self, channel_1_time):
+
+        n = len(self.all_imgs)
+        all_indices = np.arange(n)
+
+        if channel_1_time == None:
+            images_1 = None
+            images_t = self.all_imgs
+            time_t_indices = all_indices
+        # Use one of the other time points as a channel
+        else:
+            time_1_indices = all_indices[self.times == channel_1_time]
+            time_t_indices = all_indices[self.times != channel_1_time]
+            images_1 = self.all_imgs[time_1_indices]
+            images_t = self.all_imgs[time_t_indices]
+        if images_1 is not None:
+            # Duplicate channel 1 images so it matches remaining dataset
+            repeat = images_t.shape[0]//images_1.shape[0]
+            images_1 = np.repeat(images_1, repeat, axis=0)
+            # Concatenate images to two channels, 
+            self.all_imgs = np.concatenate([images_1, images_t], axis=1)
+        else:
+            self.all_imgs = images_t
+
+        # reselect remaining data to match removing channel 1 data
+        self.chrs = self.chrs[time_t_indices]
+        self.TPM = self.TPM[time_t_indices]
+        self.orfs = self.orfs[time_t_indices]
+        self.times = self.times[time_t_indices]
+
     def __len__(self):
         return len(self.all_imgs)
 
@@ -81,25 +114,27 @@ class ViTData(Dataset):
         return index
 
 
-def load_cd_data_12x64(replicate_mode, predict_tpm):
+def load_cd_data_12x64(replicate_mode, channel_1_time, predict_tpm):
     file_prefix = "vit_imgs_12x64"
-    return load_cd_data(file_prefix, replicate_mode, predict_tpm)
+    return load_cd_data(file_prefix, replicate_mode, channel_1_time, predict_tpm)
 
 
-def load_cd_data_24x128(replicate_mode, predict_tpm):
+def load_cd_data_24x128(replicate_mode, channel_1_time, predict_tpm):
     file_prefix = "vit_imgs_24x128"
-    return load_cd_data(file_prefix, replicate_mode, predict_tpm, directory='data/vit/cd/24x128')
+    return load_cd_data(file_prefix, replicate_mode, channel_1_time, predict_tpm, 
+        directory='data/vit/cd/24x128')
 
 
-def load_cd_data_24x128_p1(replicate_mode, predict_tpm):
+def load_cd_data_24x128_p1(replicate_mode, channel_1_time, predict_tpm):
     file_prefix = "vit_imgs_24x128"
-    return load_cd_data(file_prefix, replicate_mode, predict_tpm, directory='data/vit/cd/24x128_p1')
+    return load_cd_data(file_prefix, replicate_mode, channel_1_time, predict_tpm, 
+        directory='data/vit/cd/24x128_p1')
 
 
-def load_cd_data_96x512(replicate_mode, predict_tpm):
+def load_cd_data_96x512(replicate_mode, channel_1_time, predict_tpm):
     file_prefix = "vit_imgs_96x512"
     directory='data/vit/cd/96x512'
-    return load_cd_data(file_prefix, replicate_mode, predict_tpm, directory=directory)
+    return load_cd_data(file_prefix, replicate_mode, channel_1_time, predict_tpm, directory=directory)
 
 
 def read_rna_TPM(TPM_path, orfs, times):    
@@ -181,7 +216,7 @@ def load_cell_cycle_data(replicate_mode='merge'):
     return vit_data
 
 
-def load_data(pickle_paths_1, pickle_paths_2, rna_TPM_path, replicate_mode, predict_tpm):
+def load_data(pickle_paths_1, pickle_paths_2, rna_TPM_path, replicate_mode, channel_1_time, predict_tpm):
     all_imgs_1, times, orfs, chrs, df = read_mnase_pickle(pickle_paths_1)
     all_imgs_2, _, _, _, _ = read_mnase_pickle(pickle_paths_2)
 
@@ -197,12 +232,12 @@ def load_data(pickle_paths_1, pickle_paths_2, rna_TPM_path, replicate_mode, pred
         raise ValueError(f"Unimplemented {replicate_mode}")
 
     TPM = read_rna_TPM(rna_TPM_path, orfs, times)
-    vit_data = ViTData(all_imgs, orfs, chrs, times, TPM, predict_tpm)
+    vit_data = ViTData(all_imgs, orfs, chrs, times, TPM, channel_1_time, predict_tpm)
 
     return vit_data
 
 
-def load_cd_data(file_prefix, replicate_mode, predict_tpm, directory='data/vit/cd'):
+def load_cd_data(file_prefix, replicate_mode, channel_1_time, predict_tpm, directory='data/vit/cd'):
 
     TPM_path = 'data/vit/cd_rna_seq_TPM.csv'
 
@@ -220,7 +255,7 @@ def load_cd_data(file_prefix, replicate_mode, predict_tpm, directory='data/vit/c
                       f'{directory}/{file_prefix}_DM508_MNase_rep2_60_min.pkl',
                       f'{directory}/{file_prefix}_DM509_MNase_rep2_120_min.pkl')
 
-    vit_data = load_data(pickle_paths_1, pickle_paths_2, TPM_path, replicate_mode, predict_tpm)
+    vit_data = load_data(pickle_paths_1, pickle_paths_2, TPM_path, replicate_mode, channel_1_time, predict_tpm)
     return vit_data
 
 

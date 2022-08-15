@@ -524,8 +524,8 @@ def main():
     print_fl("Loading data...")
 
     # Dynamic load the correct data loading function
-    dataset = getattr(vit_data_mod, config.DATA_FUNC)(replicate_mode=config.REPLICATE_MODE,
-        predict_tpm=config.PREDICT_TPM)
+    dataset = getattr(vit_data_mod, config.DATA_FUNC)(channel_1=config.CHANNEL_1, 
+        replicate_mode=config.REPLICATE_MODE, predict_tpm=config.PREDICT_TPM)
 
     if not resume:
         dataloader = ViTDataLoader(dataset, batch_size=config.BATCH_SIZE, 
