@@ -17,22 +17,22 @@ import matplotlib.pyplot as plt
 class AttentionAnalysis:
 
     def __init__(self, trainer):
-
         self.trainer = trainer
-        trainer.compute_attentions()
 
+    def compute_attentions(self, t):
+
+        trainer = self.trainer
+        trainer.compute_attentions(t=t)
         vit_data = trainer.dataloader.dataset
 
         from einops.layers.torch import Rearrange
 
-        vectorize_att = Rearrange('b (r) (c) -> b (r c)')
+        vectorize_att = Rearrange('b i (r) (c) -> b (i r c)')
         atts_vectorized = vectorize_att(torch.Tensor(trainer.collected_attentions)).numpy()
-        atts_vectorized.shape
+        self.atts_vec = atts_vectorized
 
-        idx_120 = np.arange(len(vit_data))[vit_data.times == 120]
-
-        self.atts_vec_120 = atts_vectorized
-        self.orfs_120 = trainer.dataloader.dataset.orfs[idx_120]
+        idx_t = np.arange(len(vit_data))[vit_data.times == t]
+        self.orfs_t = trainer.dataloader.dataset.orfs[idx_t]
 
 
     def plot_clusters(self):

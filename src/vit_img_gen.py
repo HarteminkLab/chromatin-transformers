@@ -139,6 +139,8 @@ class ViTImgGen:
         plt.xlabel("Genomic position, bp", fontsize=16, labelpad=10)
         plt.ylabel("Fragment\nclass", fontsize=16, labelpad=10)
 
+        print(smoothed.shape, img_t.shape)
+
 
 def subselect_resize(smoothed, len_subselect, resize_size):
     smooth_sub = smoothed.loc[len_subselect[0]:len_subselect[1]-1]

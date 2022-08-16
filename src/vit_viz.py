@@ -47,7 +47,7 @@ def plot_gene_prediction(gene_name, time, vit, vit_data, orf_plotter=None, rna_p
 
     idx = vit_data.index_for(gene_name, time=time)
     t = vit_data.times[idx]
-    x = vit_data[idx][0].unsqueeze(0)
+    x = torch.Tensor(vit_data[idx][0]).unsqueeze(0)
 
     orf_name = vit_data.orfs[idx]
 
@@ -99,7 +99,7 @@ def plot_gene_prediction(gene_name, time, vit, vit_data, orf_plotter=None, rna_p
 
     # TODO: parameterize
     plot_bar_tx = True
-    plot_tx_type = 'bar'
+    plot_tx_type = 'transcripts'
 
     if plot_tx_type == 'transcripts' and rna_plotter is not None: 
     
@@ -422,12 +422,12 @@ def rollout(vit, img, discard_ratio=0.95, head_fusion='mean',
               device=torch.device('cpu'), attention_channel_idx=None):
     
     # Add batch dimensions for vit
-    if img.dim() == 3:
-        img = img.unsqueeze(0)
+    if len(img.shape) == 3:
+        img = torch.Tensor(img).unsqueeze(0)
 
     # Assert channels, height, width dimensions
     assert img.dim() == 4
-    assert img.shape[0] == vit.in_channels
+    assert img.shape[1] == vit.in_channels
 
     out, attentions = vit(img.to(device).float())
 

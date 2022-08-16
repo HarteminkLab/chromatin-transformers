@@ -21,6 +21,12 @@ class ViTData(Dataset):
         (self.all_imgs, self.orfs, self.chrs, self.times, 
          self.TPM) = all_imgs, orfs, chrs, times, TPM
 
+        self.original_imgs = self.all_imgs.copy()
+        self.original_chrs = self.chrs
+        self.original_TPM = self.TPM
+        self.original_orfs = self.orfs
+        self.original_times = self.times
+
         img_transform = transforms.Normalize((0.5), (0.5), (0.5))
 
         self.orfs_data = read_orfs_data('data/orfs_cd_paper_dataset.csv')
@@ -37,7 +43,6 @@ class ViTData(Dataset):
         else:
             raise ValueError(f"Unsupported TPM prediction {predict_tpm}")
 
-        self.original_imgs = self.all_imgs.copy()
         self.all_imgs = img_transform(torch.tensor(self.all_imgs))
 
         if channel_1_time is not None:
@@ -58,10 +63,11 @@ class ViTData(Dataset):
             time_t_indices = all_indices[self.times != channel_1_time]
             images_1 = self.all_imgs[time_1_indices]
             images_t = self.all_imgs[time_t_indices]
+
         if images_1 is not None:
             # Duplicate channel 1 images so it matches remaining dataset
             repeat = images_t.shape[0]//images_1.shape[0]
-            images_1 = np.repeat(images_1, repeat, axis=0)
+            images_1 = np.tile(images_1, (repeat, 1, 1, 1))
             # Concatenate images to two channels, 
             self.all_imgs = np.concatenate([images_1, images_t], axis=1)
         else:
@@ -84,7 +90,7 @@ class ViTData(Dataset):
         return tx*std+mean
 
     def read_tpm_data(self):
-        tpm_df = pd.DataFrame({'orf_name': self.orfs, 'tpm': self.unscaled_TPM, 'time': self.times})
+        tpm_df = pd.DataFrame({'orf_name': self.original_orfs, 'tpm': self.unscaled_TPM, 'time': self.original_times})
         tpm_df = tpm_df.pivot(index='orf_name', columns='time', values='tpm')
         return tpm_df
 
@@ -112,6 +118,18 @@ class ViTData(Dataset):
         index = np.arange(len(self))[(self.orfs == orf_name) & 
                                        (self.times == time)][0]
         return index
+
+    def plot_gene_time(self, gene_name, time):
+        import matplotlib.pyplot as plt
+
+        idx = self.index_for(gene_name, time)
+        dat = self.all_imgs[idx]
+
+        plt.figure(figsize=(5.5, 1.5))
+        plt.imshow(dat[0], cmap='magma_r', vmin=-1, vmax=-0.5, origin='lower', 
+            extent=[-512, 512, 0, 225], aspect='auto', interpolation='none')
+        plt.xticks([])
+        plt.ylim(20, 225)
 
 
 def load_cd_data_12x64(replicate_mode, channel_1_time, predict_tpm):
@@ -180,7 +198,7 @@ def read_mnase_pickle(pickle_paths):
     return all_imgs, times, orfs, chrs, df
 
 
-def load_cell_cycle_data(replicate_mode='merge'):
+def load_cell_cycle_data(replicate_mode, channel_1_time, predict_tpm):
     
     pickle_paths_1 = (f'data/vit/cell_cycle/vit_imgs_24x128_DMAH64_MNase_rep1_0_min.pkl',
                       f'data/vit/cell_cycle/vit_imgs_24x128_DMAH66_MNase_rep1_20_min.pkl',
@@ -211,8 +229,9 @@ def load_cell_cycle_data(replicate_mode='merge'):
                       f'data/vit/cell_cycle/vit_imgs_24x128_DMAH95_MNase_rep2_130_min.pkl',
                       f'data/vit/cell_cycle/vit_imgs_24x128_DMAH96_MNase_rep2_140_min.pkl')
 
-    rna_TPM_path = 'data/vit/cell_cycle_rna_TPM.csv'
-    vit_data = load_data(pickle_paths_1, pickle_paths_2, rna_TPM_path, replicate_mode)
+    TPM_path = 'data/vit/cell_cycle_rna_TPM.csv'
+    vit_data = load_data(pickle_paths_1, pickle_paths_2, TPM_path, replicate_mode, channel_1_time, predict_tpm)
+
     return vit_data
 
 
@@ -222,7 +241,7 @@ def load_data(pickle_paths_1, pickle_paths_2, rna_TPM_path, replicate_mode, chan
 
     # Merge the replicates
     if replicate_mode == 'merge':
-        all_imgs = (all_imgs_1 + all_imgs_1)
+        all_imgs = (all_imgs_1 + all_imgs_2)
 
     # Treat replicates as separate channels
     elif replicate_mode == 'channels':

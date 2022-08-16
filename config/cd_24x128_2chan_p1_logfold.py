@@ -26,4 +26,4 @@ PERTURBATION_LOSS_LIM = 0.75
 DROPOUT = 0.05
 
 DATA_FUNC = 'load_cd_data_24x128_p1'
-OUT_DIR = 'output/cd_24x128_2chan_p1_logfold'
+OUT_DIR = 'output/cd_fix_24x128_2chan_p1_logfold'

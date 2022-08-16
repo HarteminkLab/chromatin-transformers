@@ -399,38 +399,38 @@ class ViTTrainer:
 
     def compute_attentions(self, t=120):
 
-            timer = Timer()
-            vit_data = self.dataloader.dataset
-            vit = self.vit
-            n = len(vit_data)
+        timer = Timer()
+        vit_data = self.dataloader.dataset
+        vit = self.vit
+        n = len(vit_data)
 
-            # TODO: divide by number of samples
-            if t is None:
-                m = n
-            else:
-                m = n//6
+        # TODO: divide by number of samples
+        if t is None:
+            m = n
+        else:
+            m = n//len((set(vit_data.times)))
 
-            collected_attentions = np.zeros((m, vit.get_patch_rows(), vit.get_patch_columns()))
+        collected_attentions = np.zeros((m, vit.in_channels, vit.get_patch_rows(), vit.get_patch_columns()))
 
-            i = 0
-            for cur_data in vit_data:
+        i = 0
+        for cur_data in vit_data:
 
-                # Skip 
-                if (t is not None) and (cur_data[-1] != t): continue
+            # Skip 
+            if (t is not None) and (cur_data[-1] != t): continue
 
-                x = cur_data[0]
+            x = cur_data[0]
 
+            for channel in range(vit.in_channels):
                 att_mask = rollout(vit, x, discard_ratio=0.95, head_fusion='mean', 
-                    device=torch.device('cpu'), attention_channel_idx=0)
-                collected_attentions[i] = att_mask
-                
-                timer.print_label(f"{i+1}/{m}", conditional=(i % 1000 == 0))
+                    device=torch.device('cpu'), attention_channel_idx=channel)
+                collected_attentions[i, channel] = att_mask
+            
+            timer.print_label(f"{i+1}/{m}", conditional=(i % 1000 == 0))
+            i += 1
 
-                i += 1
+        self.collected_attentions = collected_attentions
 
-            self.collected_attentions = collected_attentions
-
-            return collected_attentions
+        return collected_attentions
 
 
     def plot_gene(self, gene_name, time):
