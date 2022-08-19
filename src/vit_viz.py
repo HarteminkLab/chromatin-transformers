@@ -107,11 +107,11 @@ def plot_gene_prediction(gene_name, time, vit, vit_data, orf_plotter=None, rna_p
 
         negate_scalar = -1 if flip else 1
 
-        ax1.plot(gene.TSS, pred_tx*negate_scalar, marker='x', mfc='red', mew=2, 
-            mec=plt.get_cmap('Reds')(0.5), markersize=15)
-        ax1.plot(gene.TSS, tx*negate_scalar, marker='o', mfc='none', mew=2, 
-            mec=plt.get_cmap('Greens')(0.5),
-            markersize=15)
+        # ax1.plot(gene.TSS, pred_tx*negate_scalar, marker='x', mfc='red', mew=2, 
+        #     mec=plt.get_cmap('Reds')(0.5), markersize=15)
+        # ax1.plot(gene.TSS, tx*negate_scalar, marker='o', mfc='none', mew=2, 
+        #     mec=plt.get_cmap('Greens')(0.5),
+        #     markersize=15)
 
     elif plot_tx_type == 'timecourse':
 
@@ -418,8 +418,8 @@ def visualize_attention(img, vit):
     return v, mask, result, ret_att_mat
 
 
-def rollout(vit, img, discard_ratio=0.95, head_fusion='mean', 
-              device=torch.device('cpu'), attention_channel_idx=None):
+def rollout(vit, img, discard_ratio=0.95, head_fusion='mean',
+    device=torch.device('cpu'), attention_channel_idx=None, return_full_attentions=False):
     
     # Add batch dimensions for vit
     if len(img.shape) == 3:
@@ -430,6 +430,15 @@ def rollout(vit, img, discard_ratio=0.95, head_fusion='mean',
     assert img.shape[1] == vit.in_channels
 
     out, attentions = vit(img.to(device).float())
+
+    if return_full_attentions: 
+        attention_arr = None
+        for channel in range(img.shape[0]):
+            for attention in attentions[channel]:
+                attention = attention.detach().numpy()
+                if attention_arr is None: attention_arr = attention
+                else: attention_arr = np.concatenate([attention_arr, attention])
+        return attention_arr
 
     assert attention_channel_idx is not None
 
@@ -453,8 +462,7 @@ def rollout(vit, img, discard_ratio=0.95, head_fusion='mean',
             else:
                 raise "Attention head fusion type Not supported"
 
-            # Drop the lowest attentions, but
-            # don't drop the class token
+            # Drop the lowest attentions, but don't drop the class token
             flat = attention_heads_fused.view(attention_heads_fused.size(0), -1)
             _, indices = flat.topk(int(flat.size(-1)*discard_ratio), -1, False)
             indices = indices[indices != 0]
@@ -471,7 +479,7 @@ def rollout(vit, img, discard_ratio=0.95, head_fusion='mean',
     # and the image patches
     mask = result[0, 0, 1:]
 
-    # e.g. In case of 25x100 image with patch size 5x5, 5x20
+    # Reshape to match patch dimensions
     mask = mask.reshape(rows, cols).to(torch.device('cpu')).numpy()
     mask = mask / np.max(mask)
 

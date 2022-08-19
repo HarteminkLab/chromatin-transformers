@@ -258,10 +258,10 @@ class ViTTrainer:
         print_fl(f'Finished Training {timer.get_time()}')
 
     def plot_prediction_performance(self, all_tx, all_predictions, title, ax=None):
-        
+
         unscaled_logTPM = np.log2(self.dataloader.dataset.unscaled_TPM+1)
-        y = self.dataloader.dataset.unscale_log_tx(all_tx)
-        x = self.dataloader.dataset.unscale_log_tx(all_predictions)
+        y = all_tx #self.dataloader.dataset.unscale_log_tx(all_tx)
+        x = all_predictions #self.dataloader.dataset.unscale_log_tx(all_predictions)
 
         r2 = r2_score(y, x)
 
@@ -272,13 +272,13 @@ class ViTTrainer:
 
         plt.plot([-20, 20], [-20, 20], c='black', linestyle='solid', lw=0.5, zorder=4)
 
-        plt.xticks(np.arange(0, 20, 5))
-        plt.yticks(np.arange(0, 20, 5))
-        plt.xlim(-0.5, 15.5)
-        plt.ylim(-0.5, 15.5)
+        #plt.xticks(np.arange(0, 20, 5))
+        #plt.yticks(np.arange(0, 20, 5))
+        plt.xlim(-6, 6)
+        plt.ylim(-6, 6)
 
-        plt.ylabel('True log$_2$ transcript level, TPM')
-        plt.xlabel('Predicted log$_2$ transcript level, TPM')
+        plt.ylabel('True log$_2$ fold-change transcript level, TPM')
+        plt.xlabel('Predicted log$_2$ fold-change transcript level, TPM')
 
         plt.title(f"{title}, n={len(all_tx)}, $R^2$={r2:.3f}")
 
@@ -317,7 +317,7 @@ class ViTTrainer:
 
 
     def plot_predictions(self):
-        fig = plt.figure(figsize=(8, 3))
+        fig = plt.figure(figsize=(12, 5))
 
         plt.subplot(1, 2, 1)
         self.plot_prediction_performance(self.train_tx, self.train_predictions, 'Train')

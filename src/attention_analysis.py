@@ -4,14 +4,19 @@ sys.path.append('.')
 
 import torch
 import torchvision
+import umap
 
 import pandas as pd
 import numpy as np
+from src.timer import Timer
 
 from src.timer import Timer
 from src.plot_utils import apply_global_settings
 from src.utils import mkdir_safe
 import matplotlib.pyplot as plt
+from scipy.spatial.distance import jensenshannon
+from src.gknn import entropy
+from scipy.spatial.distance import euclidean
 
 
 class AttentionAnalysis:
@@ -34,6 +39,138 @@ class AttentionAnalysis:
         idx_t = np.arange(len(vit_data))[vit_data.times == t]
         self.orfs_t = trainer.dataloader.dataset.orfs[idx_t]
 
+
+    def compute_umap(self, t=None):
+
+        vit_data = self.trainer.dataloader.dataset
+
+        tpm_lfc = vit_data.read_logfold_tpm_data(flatten=True, include_0=False)
+        times = vit_data.times
+        orfs = vit_data.orfs
+        atts_vec = self.atts_vec
+
+        if t is not None:
+            all_indices = np.arange(len(vit_data))
+            time_t_indices = all_indices[vit_data.times == t]
+
+            if len(atts_vec) != len(time_t_indices):
+                atts_vec = atts_vec[time_t_indices]
+
+            tpm_lfc = tpm_lfc[time_t_indices]
+            orfs = orfs[time_t_indices]
+            times = times[time_t_indices]
+
+        mapper = umap.UMAP().fit(atts_vec)
+
+        tpm_all = vit_data.TPM
+        plt_data = pd.DataFrame(index=orfs,
+                                data={'x': mapper.embedding_[:, 0], 
+                                      'y': mapper.embedding_[:, 1],
+                                      'tpm_lfc': tpm_lfc,
+                                      'time': times,
+                                      })
+        self.embeddings_df = plt_data
+        self.mapper = mapper
+
+        self.cur_atts_vec = atts_vec
+        self.cur_tpm_lfc = tpm_lfc
+        self.cur_orfs = orfs
+        self.cur_times = times
+
+    def plot_umap(self, t=None, selected_orfs=None, ascending=None, title="UMAP embeddings of attentions"):
+
+        plt_data = self.embeddings_df
+
+        if t is not None:
+            plt_data = plt_data[plt_data.time == t]
+
+        if ascending is not None:
+            plt_data = plt_data.sort_values('tpm_lfc', ascending=ascending)
+
+        plt.figure(figsize=(10, 8))
+
+        plt.scatter(plt_data.x, plt_data.y,
+                    s=10, c='#dddddd')
+
+        plt.scatter(plt_data.x, plt_data.y, c=plt_data.tpm_lfc, edgecolor='none',
+                   s=10, cmap='RdBu_r', vmin=-7, vmax=7, alpha=1.)
+        plt.colorbar()
+
+        if selected_orfs is not None:
+
+            common_orfs = list(set(plt_data.index.values).intersection(selected_orfs))
+
+            selected_data = plt_data.loc[common_orfs]
+            plt.scatter(selected_data.x, selected_data.y, edgecolor='green', marker='D', facecolor='none',
+                        s=50)
+
+            title = f"{title}, n={len(selected_orfs)}"
+
+        else:
+            title = f"{title}, n={len(plt_data)}"
+
+        plt.title(title, fontsize=16)
+
+    def load_rossi(self):
+        rossi = pd.read_csv('data/Rossi_Sites_All.txt', sep=' ')
+        rossi_w_targets = rossi[~rossi.Target.isna()]
+        tf_names = rossi_w_targets['name'].unique()
+        self.rossi_w_targets = rossi_w_targets
+        self.tf_names = tf_names
+
+    def compute_rossi_dispersion(self):
+
+        tf_names = self.tf_names
+        rossi_w_targets = self.rossi_w_targets
+        atts_vec = self.cur_atts_vec
+        orfs_data = self.trainer.dataloader.dataset.orfs_data
+
+        timer = Timer()
+        rossi_dispersions = pd.DataFrame(index=tf_names)
+        rossi_dispersions['js'] = np.nan
+        rossi_dispersions['mean_euclidean'] = np.nan
+        rossi_dispersions['mean_squared_euclidean'] = np.nan
+
+        k = 1000
+        i = 0
+
+        null_distances, null_indices = compute_rand_att_vec_distances(atts_vec, k)
+        null_distances_2, _ = compute_rand_att_vec_distances(atts_vec, k)
+        null_entropy = compute_sampled_entropy(atts_vec, k)
+
+        rossi_dispersions.loc['Null', 'mean_euclidean'] = null_distances.mean()
+        rossi_dispersions.loc['Null', 'mean_squared_euclidean'] = (null_distances**2).mean()
+        rossi_dispersions.loc['Null', 'js'] = jensenshannon(null_distances, null_distances_2)
+        rossi_dispersions.loc['Null', 'n'] = k
+        rossi_dispersions.loc['Null', 'entropy'] = null_entropy
+
+        for tf in tf_names:
+            selected_orfs = orfs_for_rossi_tf(orfs_data, rossi_w_targets, tf)
+
+            if len(selected_orfs) <= 1: continue
+
+            selected_index = index_for_selected_orfs(self.cur_orfs, selected_orfs)
+            selected_atts_vec = atts_vec[selected_index]
+
+            if selected_atts_vec.sum() == 0: continue
+
+            selected_distances, _ = compute_rand_att_vec_distances(selected_atts_vec, k)
+
+            rossi_dispersions.loc[tf, 'mean_euclidean'] = selected_distances.mean()
+            rossi_dispersions.loc[tf, 'mean_squared_euclidean'] = (selected_distances**2).mean()
+            rossi_dispersions.loc[tf, 'js'] = jensenshannon(null_distances, selected_distances)
+            rossi_dispersions.loc[tf, 'n'] = len(selected_orfs)
+            rossi_dispersions.loc[tf, 'entropy'] = compute_sampled_entropy(selected_atts_vec, k)
+
+            timer.print_progress(i, len(tf_names), every=60)
+            i += 1
+
+        rossi_dispersions['entropy_difference'] = rossi_dispersions.entropy - null_entropy
+
+        self.rossi_dispersions = rossi_dispersions
+        self.null_orfs = self.cur_orfs[null_indices]
+        self.null_indices = null_indices
+            
 
     def plot_clusters(self):
 
@@ -218,55 +355,46 @@ def plot_tpm_cluster_idx(trainer, orfs_120, current_idx):
     plt.ylabel("$\\log$ TPM")
 
 
-def plot_umap(vit_data, mapper, clus_labels, log_tpm, selected, hide_ticks=False):
+def compute_rand_att_vec_distances(atts_vec, k):
+    indices = np.random.choice(len(atts_vec), (k, 2), replace=True)
 
-    idx_120 = np.arange(len(vit_data))[vit_data.times == 120]
-    orfs_120 = vit_data.orfs[idx_120]
+    dists = np.zeros(k)
+    for i in range(len(indices)):
+        dists[i] = euclidean(atts_vec[indices[i, 0]], atts_vec[indices[i, 1]])
 
-    contain = np.isin(orfs_120, selected)
-    selected_idx = np.arange(len(orfs_120))[contain]
+    return dists, indices
 
-    mapper_x = mapper.embedding_[:, 0]
-    mapper_y = mapper.embedding_[:, 1]
+def index_for_selected_orfs(orfs, selected):
+    select_orfs = np.isin(orfs, selected)
+    selected_idx = np.arange(len(orfs))[select_orfs]
+    return selected_idx
 
-    plt.figure(figsize=(6, 6))
-    plt.scatter(mapper_x, mapper_y, s=15, facecolor='none', 
-                c='#dddddd', zorder=1)
-    plt.scatter(mapper_x, mapper_y, s=10, edgecolor='none', 
-                c=clus_labels, cmap='Spectral', alpha=1., zorder=2)
-    plt.scatter(mapper_x[contain], mapper_y[contain], s=40, marker='D', 
-                facecolor='none', edgecolor='black', alpha=1., zorder=3)
-    plt.xticks([])
-    plt.yticks([])
-    plt.title("UMAP embeddings of t=120 attentions colored by cluster labels (k=16)")
+def avg_dist_two_vecs(atts_vec_1, atts_vec_2, k):
 
-    bbox = plt.gca().get_window_extent()
-    cax = plt.axes([0.95, 0.125, 0.015, 0.755])
-    cax.yaxis.tick_right()
+    indices_1 = np.random.choice(len(atts_vec_1), k, replace=True)
+    indices_2 = np.random.choice(len(atts_vec_2), k, replace=True)
 
-    cax.imshow(np.arange(16).reshape(16, 1), extent=[0, 1, 0, 16], zorder=100, cmap='Spectral_r', aspect='auto')
-    cax.set_yticks(np.arange(16)+0.5)
-    cax.set_yticklabels(np.arange(16)+1)
-    cax.set_xticks([])
+    dists = np.zeros(k)
+    for i in range(len(indices_1)):
+        dists[i] = euclidean(atts_vec_1[indices_1[i]], atts_vec_2[indices_2[i]])
 
-    plt.figure(figsize=(7.5, 6))
-    plt.title("UMAP embeddings of t=120 attentions colored by log2 Transcript level")
-    plt.scatter(mapper.embedding_[:, 0], mapper.embedding_[:, 1], s=15, facecolor='none', 
-                c='#dddddd', zorder=1)
-    plot_data = pd.DataFrame(data={'x':mapper.embedding_[:, 0], 
-                       'y':mapper.embedding_[:, 1],
-                       'tpm':log_tpm})
-    plot_data = plot_data.sort_values('tpm')
-    plt.scatter(plot_data.x, plot_data.y, s=10, edgecolor='none', 
-                c=plot_data.tpm, cmap='viridis', vmin=5, vmax=12, alpha=1., zorder=2)
-    plt.colorbar()
-    plt.scatter(mapper_x[contain], mapper_y[contain], s=60, marker='D', 
-                    facecolor='none', edgecolor='red', alpha=0.75, zorder=3)
+    return dists.mean()
 
-    if hide_ticks:
-        plt.xticks([])
-        plt.yticks([])
 
-    for i in range(0, 14, 1):
-        plt.axvline(i, c='#ddd', lw=1, zorder=1, linestyle='dotted')
-        plt.axhline(i, c='#ddd', lw=1, zorder=1, linestyle='dotted')
+def orfs_for_rossi_tf(orfs_data, rossi_w_targets, tf):
+    targets = rossi_w_targets[rossi_w_targets['name'] == tf]
+    sel_orfs = orfs_data[orfs_data['name'].isin(targets.Target.values)].index.values
+    return sel_orfs
+
+
+def indices_for_for_rossi_tf(orfs, orfs_data, rossi_w_targets, tf):
+    sel_orfs = orfs_for_rossi_tf(orfs_data, rossi_w_targets, tf)
+    return index_for_selected_orfs(orfs, sel_orfs)
+
+
+def compute_sampled_entropy(atts_vec, k):
+    k = min(k, len(atts_vec))
+    indices = np.random.choice(len(atts_vec), k, replace=False)
+    entropy_val = entropy(atts_vec[indices, :])
+    return entropy_val
+

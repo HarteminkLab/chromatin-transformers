@@ -137,6 +137,12 @@ def extract_desc_val(data, key):
     return vals
 
 
+def orfs_for_go_term(go_term):
+    orfs_data = read_sgd_orfs()
+    orfs = orfs_data[[go_term in o for o in orfs_data.ontology.str.split(',')]].index.values
+    return orfs
+
+
 def read_sgd_orfs():
 
     from pandas import Series

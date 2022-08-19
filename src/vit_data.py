@@ -101,14 +101,21 @@ class ViTData(Dataset):
             return tpm_df.values.reshape(-1, order='F')
         return tpm_df
 
-    def read_logfold_tpm_data(self, flatten=False):
+    def read_logfold_tpm_data(self, flatten=False, include_0=True):
         tpm_df = self.read_tpm_data()
         tpm_0 = tpm_df[0.0].copy()
         for time in tpm_df.columns:
             tpm_df[time] = np.log2((tpm_df[time]+1) / (tpm_0+1))
         tpm_df = tpm_df.loc[self.orfs_data.index.values]
+
         if flatten:
-            return tpm_df.values.reshape(-1, order='F')
+            
+            if not include_0:
+                tpm_df = tpm_df[tpm_df.columns[1:]]
+
+            tpm = tpm_df.values.reshape(-1, order='F')
+
+            return tpm
 
         return tpm_df
 
