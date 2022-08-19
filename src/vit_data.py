@@ -206,35 +206,38 @@ def read_mnase_pickle(pickle_paths):
 
 
 def load_cell_cycle_data(replicate_mode, channel_1_time, predict_tpm):
-    
-    pickle_paths_1 = (f'data/vit/cell_cycle/vit_imgs_24x128_DMAH64_MNase_rep1_0_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH66_MNase_rep1_20_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH67_MNase_rep1_30_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH68_MNase_rep1_40_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH69_MNase_rep1_50_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH70_MNase_rep1_60_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH71_MNase_rep1_70_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH72_MNase_rep1_80_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH73_MNase_rep1_90_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH74_MNase_rep1_100_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH76_MNase_rep1_120_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH77_MNase_rep1_130_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH78_MNase_rep1_140_min.pkl')
 
-    pickle_paths_2 = (f'data/vit/cell_cycle/vit_imgs_24x128_DMAH82_MNase_rep2_0_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH83_MNase_rep2_10_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH84_MNase_rep2_20_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH85_MNase_rep2_30_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH86_MNase_rep2_40_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH87_MNase_rep2_50_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH88_MNase_rep2_60_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH89_MNase_rep2_70_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH90_MNase_rep2_80_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH91_MNase_rep2_90_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH92_MNase_rep2_100_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH94_MNase_rep2_120_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH95_MNase_rep2_130_min.pkl',
-                      f'data/vit/cell_cycle/vit_imgs_24x128_DMAH96_MNase_rep2_140_min.pkl')
+    data_dir = 'data/vit/cell_cycle'
+    file_prefix = 'vit_imgs_24x128'
+    
+    pickle_paths_1 = (f'{data_dir}/{file_prefix}_DMAH64_MNase_rep1_0_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH66_MNase_rep1_20_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH67_MNase_rep1_30_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH68_MNase_rep1_40_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH69_MNase_rep1_50_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH70_MNase_rep1_60_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH71_MNase_rep1_70_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH72_MNase_rep1_80_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH73_MNase_rep1_90_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH74_MNase_rep1_100_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH76_MNase_rep1_120_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH77_MNase_rep1_130_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH78_MNase_rep1_140_min.pkl')
+
+    pickle_paths_2 = (f'{data_dir}/{file_prefix}_DMAH82_MNase_rep2_0_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH83_MNase_rep2_10_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH84_MNase_rep2_20_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH85_MNase_rep2_30_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH86_MNase_rep2_40_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH87_MNase_rep2_50_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH88_MNase_rep2_60_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH89_MNase_rep2_70_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH90_MNase_rep2_80_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH91_MNase_rep2_90_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH92_MNase_rep2_100_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH94_MNase_rep2_120_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH95_MNase_rep2_130_min.pkl',
+                      f'{data_dir}/{file_prefix}_DMAH96_MNase_rep2_140_min.pkl')
 
     TPM_path = 'data/vit/cell_cycle_rna_TPM.csv'
     vit_data = load_data(pickle_paths_1, pickle_paths_2, TPM_path, replicate_mode, channel_1_time, predict_tpm)

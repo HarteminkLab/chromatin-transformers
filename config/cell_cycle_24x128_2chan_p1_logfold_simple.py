@@ -5,9 +5,9 @@ IN_CHANNELS = 2
 IMG_SIZE = (24, 128)
 BATCH_SIZE = 96
 PATCH_SIZE = 8
-EMB_SIZE = 64
-DEPTH = 24
-NUM_HEADS = 4
+EMB_SIZE = 32
+DEPTH = 4
+NUM_HEADS = 2
 FORWARD_EXPANSION = 4
 
 SPLIT_TYPE = "time"
@@ -26,4 +26,4 @@ PERTURBATION_LOSS_LIM = 0.75
 DROPOUT = 0.05
 
 DATA_FUNC = 'load_cell_cycle_data'
-OUT_DIR = 'output/cell_cycle_24x128_2chan_p1_logfold'
+OUT_DIR = 'output/cell_cycle_24x128_2chan_p1_logfold_simple'
