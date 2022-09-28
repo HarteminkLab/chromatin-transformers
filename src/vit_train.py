@@ -34,12 +34,13 @@ import torch
 
 class ViTTrainer:
 
-    def __init__(self, vit, config_name, dataloader, resume=False, resume_path=None):
+    def __init__(self, vit, config_name, dataloader, resume=False, resume_path=None,
+            criterion=nn.MSELoss):
         super().__init__()
 
         self.vit = vit
         self.dataloader = dataloader
-        self.criterion = nn.MSELoss()
+        self.criterion = criterion()
         self.resume = resume
         self.resume_path = resume_path
         self.config = vit.config

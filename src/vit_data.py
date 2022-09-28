@@ -26,12 +26,17 @@ class ViTData(Dataset):
         self.original_TPM = self.TPM
         self.original_orfs = self.orfs
         self.original_times = self.times
+        self.unscaled_TPM = self.TPM
+        self.predict_tpm = predict_tpm
+        self.all_imgs_untransformed = self.all_imgs.copy()
+        self.init_transforms()
+
+
+    def init_transforms(self):
 
         img_transform = transforms.Normalize((0.5), (0.5), (0.5))
 
         self.orfs_data = read_orfs_data('data/orfs_cd_paper_dataset.csv')
-        self.unscaled_TPM = TPM
-        self.predict_tpm = predict_tpm
 
         # Predict absolute expression level
         if predict_tpm == 'absolute':
@@ -43,7 +48,6 @@ class ViTData(Dataset):
         else:
             raise ValueError(f"Unsupported TPM prediction {predict_tpm}")
 
-        self.all_imgs_untransformed = self.all_imgs.copy()
         self.all_imgs = img_transform(torch.tensor(self.all_imgs))
 
         if channel_1_time is not None:
@@ -250,7 +254,8 @@ def read_mnase_pickle(pickle_paths):
     return all_imgs, times, orfs, chrs, df
 
 
-def load_cell_cycle_data(replicate_mode, channel_1_time, predict_tpm):
+def load_cell_cycle_data(replicate_mode, channel_1_time, predict_tpm, 
+    init_class=ViTData, debug_n=None):
 
     data_dir = 'data/vit/cell_cycle_24x128_p1'
     file_prefix = 'vit_imgs_24x128'
@@ -284,12 +289,14 @@ def load_cell_cycle_data(replicate_mode, channel_1_time, predict_tpm):
                       f'{data_dir}/{file_prefix}_DMAH96_MNase_rep2_140_min.pkl')
 
     TPM_path = 'data/vit/cell_cycle_rna_TPM.csv'
-    vit_data = load_data(pickle_paths_1, pickle_paths_2, TPM_path, replicate_mode, channel_1_time, predict_tpm)
+    vit_data = load_data(pickle_paths_1, pickle_paths_2, TPM_path, replicate_mode, 
+        channel_1_time, predict_tpm, init_class=init_class, debug_n=debug_n)
 
     return vit_data
 
 
-def load_data(pickle_paths_1, pickle_paths_2, rna_TPM_path, replicate_mode, channel_1_time, predict_tpm):
+def load_data(pickle_paths_1, pickle_paths_2, rna_TPM_path, replicate_mode, 
+              channel_1_time, predict_tpm, init_class=ViTData, debug_n=None):
     all_imgs_1, times, orfs, chrs, df = read_mnase_pickle(pickle_paths_1)
     all_imgs_2, _, _, _, _ = read_mnase_pickle(pickle_paths_2)
 
@@ -305,7 +312,7 @@ def load_data(pickle_paths_1, pickle_paths_2, rna_TPM_path, replicate_mode, chan
         raise ValueError(f"Unimplemented {replicate_mode}")
 
     TPM = read_rna_TPM(rna_TPM_path, orfs, times)
-    vit_data = ViTData(all_imgs, orfs, chrs, times, TPM, channel_1_time, predict_tpm)
+    vit_data = init_class(all_imgs, orfs, chrs, times, TPM, channel_1_time, predict_tpm, debug_n=debug_n)
 
     return vit_data
 

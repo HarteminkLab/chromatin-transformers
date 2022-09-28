@@ -9,8 +9,8 @@ import torch
 
 class ViTDataLoader:
 
-    def __init__(self, dataset, batch_size=64, split_type="chrom", split_arg=4, valid_type="proportion", valid_arg=0.1,
-                 indices_path=None):
+    def __init__(self, dataset, batch_size=64, split_type="chrom", split_arg=4, valid_type="proportion",
+                 valid_arg=0.1, indices_path=None):
 
         # Load data
         self.dataset = dataset
@@ -21,16 +21,20 @@ class ViTDataLoader:
         if indices_path is None:
 
             if split_type == 'hybrid':
-                self.trainset, self.validationset, self.testset = testtrain_split_hybrid(self.dataset, test_prop=split_arg, 
+                self.trainset, self.validationset, self.testset = testtrain_split_hybrid(self.dataset, 
+                    test_prop=split_arg, 
                     valid_type=valid_type, valid_arg=valid_arg)
             elif split_type == 'proportion':
-                self.trainset, self.validationset, self.testset = testtrain_split_prop(self.dataset, test_prop=split_arg, 
+                self.trainset, self.validationset, self.testset = testtrain_split_prop(self.dataset,
+                    test_prop=split_arg, 
                     valid_type=valid_type, valid_arg=valid_arg)
             elif split_type == 'chrom':
-                self.trainset, self.validationset, self.testset = testtrain_split_chrom(self.dataset, test_chrom=split_arg, 
+                self.trainset, self.validationset, self.testset = testtrain_split_chrom(self.dataset,
+                    test_chrom=split_arg, 
                     valid_type=valid_type, valid_arg=valid_arg)
             elif split_type == 'time':
-                self.trainset, self.validationset, self.testset = testtrain_split_time(self.dataset, test_time=split_arg, 
+                self.trainset, self.validationset, self.testset = testtrain_split_time(self.dataset,
+                    test_time=split_arg, 
                     valid_type=valid_type, valid_arg=valid_arg)
             else:
                 raise ValueError("Invalid split type")
