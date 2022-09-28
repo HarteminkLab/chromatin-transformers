@@ -43,41 +43,54 @@ class ViTData(Dataset):
         else:
             raise ValueError(f"Unsupported TPM prediction {predict_tpm}")
 
+        self.all_imgs_untransformed = self.all_imgs.copy()
         self.all_imgs = img_transform(torch.tensor(self.all_imgs))
 
         if channel_1_time is not None:
-            self.transform_data(channel_1_time)
+            (all_imgs, chrs, TPM, orfs, times) = \
+                self.transform_data_for_channel(channel_1_time, self.all_imgs)
 
-    def transform_data(self, channel_1_time):
+            (self.all_imgs_untransformed_channeled, _, _,_, _) = \
+                self.transform_data_for_channel(channel_1_time, self.all_imgs_untransformed)
+
+            self.all_imgs = all_imgs
+            self.chrs = chrs
+            self.TPM = TPM
+            self.orfs = orfs
+            self.times = times
+
+    def transform_data_for_channel(self, channel_1_time, all_imgs):
 
         n = len(self.all_imgs)
         all_indices = np.arange(n)
 
         if channel_1_time == None:
             images_1 = None
-            images_t = self.all_imgs
+            images_t = all_imgs
             time_t_indices = all_indices
         # Use one of the other time points as a channel
         else:
             time_1_indices = all_indices[self.times == channel_1_time]
             time_t_indices = all_indices[self.times != channel_1_time]
-            images_1 = self.all_imgs[time_1_indices]
-            images_t = self.all_imgs[time_t_indices]
+            images_1 = all_imgs[time_1_indices]
+            images_t = all_imgs[time_t_indices]
 
         if images_1 is not None:
             # Duplicate channel 1 images so it matches remaining dataset
             repeat = images_t.shape[0]//images_1.shape[0]
             images_1 = np.tile(images_1, (repeat, 1, 1, 1))
             # Concatenate images to two channels, 
-            self.all_imgs = np.concatenate([images_1, images_t], axis=1)
+            all_imgs = np.concatenate([images_1, images_t], axis=1)
         else:
-            self.all_imgs = images_t
+            all_imgs = images_t
 
         # reselect remaining data to match removing channel 1 data
-        self.chrs = self.chrs[time_t_indices]
-        self.TPM = self.TPM[time_t_indices]
-        self.orfs = self.orfs[time_t_indices]
-        self.times = self.times[time_t_indices]
+        chrs = self.chrs[time_t_indices]
+        TPM = self.TPM[time_t_indices]
+        orfs = self.orfs[time_t_indices]
+        times = self.times[time_t_indices]
+
+        return all_imgs, chrs, TPM, orfs, times
 
     def __len__(self):
         return len(self.all_imgs)
@@ -88,6 +101,15 @@ class ViTData(Dataset):
     def unscale_log_tx(self, tx):
         mean, std = np.log2(self.unscaled_TPM+1).mean(), np.log2(self.unscaled_TPM+1).std()
         return tx*std+mean
+
+    def read_lfc_mean(self):
+        tpm_data = self.read_tpm_data()
+        mean_tpm = tpm_data.mean(axis=1)
+        lfc_mean_tpm = tpm_data.copy()
+
+        for t in tpm_data.columns:
+            lfc_mean_tpm[t] = np.log2((tpm_data[t] + 1) / (mean_tpm + 1))
+        return lfc_mean_tpm
 
     def read_tpm_data(self):
         tpm_df = pd.DataFrame({'orf_name': self.original_orfs, 'tpm': self.unscaled_TPM, 'time': self.original_times})
@@ -121,22 +143,45 @@ class ViTData(Dataset):
 
     def index_for(self, gene_name, time):
         orf_name = self.orfs_data[(self.orfs_data['name'] == gene_name) |
-                             (self.orfs_data.index == gene_name)].index.values[0]
+                                  (self.orfs_data.index == gene_name)].index.values[0]
+
         index = np.arange(len(self))[(self.orfs == orf_name) & 
                                        (self.times == time)][0]
         return index
 
-    def plot_gene_time(self, gene_name, time):
+    def plot_genes_time(self, gene_names, time):
         import matplotlib.pyplot as plt
+        fig = plt.figure(figsize=(12, 4))
+
+        for i in range(len(gene_names)):
+            gene_name = gene_names[i]
+            plt.subplot(4, 4, i+1)
+            self.plot_gene_time(gene_name, time, fig)
+            plt.yticks([])
+
+    def plot_gene_time(self, gene_name, time, fig=None):
+        import matplotlib.pyplot as plt
+
+        if fig is None:
+            fig = plt.figure(figsize=(5.5, 1.5))
 
         idx = self.index_for(gene_name, time)
         dat = self.all_imgs[idx]
 
-        plt.figure(figsize=(5.5, 1.5))
-        plt.imshow(dat[0], cmap='magma_r', vmin=-1, vmax=-0.5, origin='lower', 
+        plt.imshow(dat[1], cmap='magma_r', vmin=-1, vmax=-0.5, origin='lower', 
             extent=[-512, 512, 0, 225], aspect='auto', interpolation='none')
         plt.xticks([])
         plt.ylim(20, 225)
+        plt.axvline(0, c='blue', lw=1, linestyle='solid')
+
+    def indices_for(self, sel_orfs, time):
+
+        indices = np.arange(len(self))
+        orf_indices = indices[np.isin(self.orfs, sel_orfs)]
+        time_indices = indices[self.times == time]
+
+        sel_indices = np.array(sorted(list(set(orf_indices).intersection(set(time_indices)))))
+        return sel_indices
 
 
 def load_cd_data_12x64(replicate_mode, channel_1_time, predict_tpm):

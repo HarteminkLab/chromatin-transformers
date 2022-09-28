@@ -137,6 +137,20 @@ def extract_desc_val(data, key):
     return vals
 
 
+def go_get_term_names(obodag, terms):
+    """Print gene ontology terms from ontology ids and graph"""
+    names = []
+    for gpar in terms:
+        p = obodag.query_term(gpar)
+        if p is None:
+            title = None
+        else:
+            title = p.name.title()
+        names.append(title)
+
+    return names
+
+
 def orfs_for_go_term(go_term):
     orfs_data = read_sgd_orfs()
     orfs = orfs_data[[go_term in o for o in orfs_data.ontology.str.split(',')]].index.values
