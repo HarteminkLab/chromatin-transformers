@@ -32,7 +32,9 @@ from sklearn.metrics import r2_score
 from src.plot_utils import plot_density_scatter
 from src.vit_viz import rollout, plot_gene_prediction
 from src.timer import Timer
-from src.vit_train import get_device
+from src.vit_data import load_cell_cycle_data
+from src.vit_data_clustering import ViTDataDeepClustering
+from src.vit_train import get_device, load_model_config
 
 
 class ViTDeepClusterTrainer:
@@ -201,6 +203,9 @@ class ViTDeepClusterTrainer:
             self.train_losses.append(train_loss)
             self.epochs_arr.append(epoch)
 
+            # Clustering for pseudo labels
+            self.cluster_and_assign_pseudo_labels()
+
             if epoch % 10 == 0:
 
                 if fig is not None:
@@ -218,8 +223,13 @@ class ViTDeepClusterTrainer:
 
                 plt.savefig(f"{self.out_dir}/progress.png")
 
-            # Clustering for pseudo labels
-            self.cluster_and_assign_pseudo_labels()
+                torch.save(vit.state_dict(), model_save_path)
+
+            # Save intermediate model, more frequently early on to capture
+            # validation loss minimum
+            if ((epoch % self.save_every == 0 and epoch < self.save_every_long) or 
+                (epoch % self.save_every_long == 0 and epoch >= self.save_every_long)):
+               torch.save(vit.state_dict(), f"{model_save_path}.{epoch}")
 
         print_fl(f'Finished Training {timer.get_time()}')
 
@@ -272,15 +282,7 @@ def one_hot_encode(labels, n_classes):
 
 def main():
 
-    # Load config from command-line
-    if len(sys.argv) == 3:
-        assert sys.argv[1] == 'resume'
-        resume_path = sys.argv[2]
-        resume = True
-        vit, config = load_model_dir(resume_path)
-        config_name = None
-
-    elif len(sys.argv) == 2:
+    if len(sys.argv) == 2:
         config_name = sys.argv[1]
         config = importlib.import_module(f"config.{config_name}")
         vit = load_model_config(config)
@@ -291,37 +293,20 @@ def main():
 
     # Data loading
     print_fl("Loading data...")
+    vit_data = load_cell_cycle_data(config.REPLICATE_MODE, config.CHANNEL_1, config.PREDICT_TPM, 
+                                    init_class=ViTDataDeepClustering, debug_n=100)
+    dataloader = ViTDataLoader(vit_data, batch_size=config.BATCH_SIZE, 
+                split_type=config.SPLIT_TYPE, split_arg=config.SPLIT_ARG,
+                valid_type=config.VALIDATION_TYPE, valid_arg=config.VALIDATION_ARG)
 
-    # Dynamic load the correct data loading function
-    dataset = getattr(vit_data_mod, config.DATA_FUNC)(channel_1_time=config.CHANNEL_1, 
-        replicate_mode=config.REPLICATE_MODE, predict_tpm=config.PREDICT_TPM)
-
-    if not resume:
-        dataloader = ViTDataLoader(dataset, batch_size=config.BATCH_SIZE, 
-            split_type=config.SPLIT_TYPE, split_arg=config.SPLIT_ARG,
-            valid_type=config.VALIDATION_TYPE, valid_arg=config.VALIDATION_ARG)
-    else:
-        data_indices_path = f"{resume_path}/indices.csv"
-        dataloader = ViTDataLoader(dataset, batch_size=config.BATCH_SIZE, 
-            split_type=config.SPLIT_TYPE, split_arg=config.SPLIT_ARG,
-            valid_type=config.VALIDATION_TYPE, valid_arg=config.VALIDATION_ARG,
-            indices_path=data_indices_path)
-
-    print_fl(f"Dataloader split: {dataloader.split_repr()}")
-
-    # Initialize trainer
-    print_fl("Initializing trainer...")
-    trainer = ViTTrainer(vit, config_name, dataloader, resume=resume, resume_path=resume_path)
+    trainer = ViTDeepClusterTrainer(vit, config_name, dataloader, resume=False, resume_path=None, debug=True,
+                                    criterion=nn.MultiLabelSoftMarginLoss)
     trainer.setup()
     print_fl(f"Writing to {trainer.out_dir}")
 
-    if not resume:
-        data_indices_path = f"{trainer.out_dir}/indices.csv"
-        dataloader.save_indices(data_indices_path)
-
     # Train
     print_fl("Training...")
-    trainer.train() 
+    trainer.train()
 
 
 if __name__ == '__main__':
