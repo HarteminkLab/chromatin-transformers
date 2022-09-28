@@ -298,7 +298,7 @@ def main():
                 split_type=config.SPLIT_TYPE, split_arg=config.SPLIT_ARG,
                 valid_type=config.VALIDATION_TYPE, valid_arg=config.VALIDATION_ARG)
 
-    trainer = ViTDeepClusterTrainer(vit, config_name, dataloader, resume=False, resume_path=None, debug=True,
+    trainer = ViTDeepClusterTrainer(vit, config_name, dataloader, resume=False, resume_path=None,
                                     criterion=nn.MultiLabelSoftMarginLoss)
     trainer.setup()
     print_fl(f"Writing to {trainer.out_dir}")

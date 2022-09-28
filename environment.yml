@@ -1,4 +1,4 @@
-name: xformers-torch
+name: chromatin-transformers
 channels:
   - python==3.9.7
   - defaults
@@ -10,6 +10,7 @@ dependencies:
   - scikit-learn==1.0.2
   - scipy==1.7.3
   - statsmodels==0.13.2
+  - pacmap==0.6.5
 - pip:
     - einops==0.4.1
     - opencv-python==4.5.5.64
