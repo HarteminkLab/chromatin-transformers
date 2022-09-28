@@ -133,7 +133,6 @@ class ViTDeepClusterTrainer:
 
         vit = self.vit
         epochs_arr = self.epochs_arr
-        validation_losses = self.validation_losses
         train_losses = self.train_losses
         optimizer = self.optimizer
         device = self.device
