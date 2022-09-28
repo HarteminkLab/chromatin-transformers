@@ -207,7 +207,7 @@ def read_mnase_pickle(pickle_paths):
 
 def load_cell_cycle_data(replicate_mode, channel_1_time, predict_tpm):
 
-    data_dir = 'data/vit/cell_cycle'
+    data_dir = 'data/vit/cell_cycle_24x128_p1'
     file_prefix = 'vit_imgs_24x128'
     
     pickle_paths_1 = (f'{data_dir}/{file_prefix}_DMAH64_MNase_rep1_0_min.pkl',
@@ -225,7 +225,6 @@ def load_cell_cycle_data(replicate_mode, channel_1_time, predict_tpm):
                       f'{data_dir}/{file_prefix}_DMAH78_MNase_rep1_140_min.pkl')
 
     pickle_paths_2 = (f'{data_dir}/{file_prefix}_DMAH82_MNase_rep2_0_min.pkl',
-                      f'{data_dir}/{file_prefix}_DMAH83_MNase_rep2_10_min.pkl',
                       f'{data_dir}/{file_prefix}_DMAH84_MNase_rep2_20_min.pkl',
                       f'{data_dir}/{file_prefix}_DMAH85_MNase_rep2_30_min.pkl',
                       f'{data_dir}/{file_prefix}_DMAH86_MNase_rep2_40_min.pkl',
