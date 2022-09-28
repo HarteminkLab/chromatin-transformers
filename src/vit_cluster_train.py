@@ -293,13 +293,13 @@ def main():
     # Data loading
     print_fl("Loading data...")
     vit_data = load_cell_cycle_data(config.REPLICATE_MODE, config.CHANNEL_1, config.PREDICT_TPM, 
-                                    init_class=ViTDataDeepClustering)
+                                    init_class=ViTDataDeepClustering, debug_n=4000)
     dataloader = ViTDataLoader(vit_data, batch_size=config.BATCH_SIZE, 
                 split_type=config.SPLIT_TYPE, split_arg=config.SPLIT_ARG,
                 valid_type=config.VALIDATION_TYPE, valid_arg=config.VALIDATION_ARG)
 
     trainer = ViTDeepClusterTrainer(vit, config_name, dataloader, resume=False, resume_path=None,
-                                    criterion=nn.MultiLabelSoftMarginLoss)
+        criterion=nn.MultiLabelSoftMarginLoss)
     trainer.setup()
     print_fl(f"Writing to {trainer.out_dir}")
 

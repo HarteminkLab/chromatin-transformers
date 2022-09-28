@@ -26,4 +26,4 @@ PERTURBATION_LOSS_LIM = 0.75
 DROPOUT = 0.05
 
 DATA_FUNC = 'load_cell_cycle_data'
-OUT_DIR = 'output/deep_clustering_full'
+OUT_DIR = 'output/deep_clustering_4000'
