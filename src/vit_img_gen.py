@@ -22,7 +22,7 @@ from src.chromatin import filter_mnase
 from src.utils import print_fl, mkdir_safe
 from scipy.signal import convolve2d
 from src.find_small_plus1 import shift_for_p1
-
+from config.data_gen import data24x128 as data_config
 
 class ViTImgGen:
 
@@ -46,21 +46,27 @@ class ViTImgGen:
     def get_mnase_img(self, gene):
 
         window = self.window 
-        sublength_resize_height = self.sublength_resize_height 
+        win_2 = window//2
+
+        # Convert reads to a count matrix
+        span = gene.TSS-win_2-self.window_padding, gene.TSS+win_2+self.window_padding
+        gene_mnase = filter_mnase(self.mnase, span[0], span[1], gene.chr)
+
+        return self.get_mnase_image_for_mnase(span, gene_mnase, flip=(gene.strand == '-'))
+
+    def get_mnase_image_for_mnase(self, span, gene_mnase, flip):
+
+        win_2 = self.window//2
         len_cuts = self.len_cuts 
         len_span = self.len_span
         img_width = self.img_width
-
-        # Convert reads to a count matrix
-        win_2 = window//2
-        span = gene.TSS-win_2-self.window_padding, gene.TSS+win_2+self.window_padding
-        gene_mnase = filter_mnase(self.mnase, span[0], span[1], gene.chr)
+        sublength_resize_height = self.sublength_resize_height 
 
         img = exhaustive_counts(gene_mnase, 
                 (span[0], span[1]), len_span, x_key='mid', y_key='length')
 
         # Flip the mnase around TSS if on Crick
-        if gene.strand == '-':
+        if flip:
             img[:] = np.flip(img.values, axis=1)
 
         # Smooth the source image
@@ -89,7 +95,7 @@ class ViTImgGen:
         return img, scaled_img, shifted_df, img_slices, p1_pos
 
 
-    def plot_resized_img(self):
+    def plot_resized_img(self, vmax=0.25):
 
         img, img_t, smoothed, img_slices = self.img, self.scaled_img, self.smoothed, self.img_slices
         win_2 = self.window//2
@@ -112,7 +118,7 @@ class ViTImgGen:
             plt.axvline(0, c='black', lw=1)
 
         def plot_img(img, extent=[-win_2, win_2, 0, 225]):
-            plt.imshow(img, cmap='magma_r', vmax=0.25, origin='lower', 
+            plt.imshow(img, cmap='magma_r', vmax=vmax, origin='lower', 
                 extent=extent, aspect='auto', interpolation='none')
             plt.xticks([])
             plt.ylim(20, 225)
@@ -127,7 +133,7 @@ class ViTImgGen:
         plt.ylabel("Fragment\nlength, bp", fontsize=16, labelpad=10)
 
         plt.subplot(4, 1, 2)
-        plot_scaled(img_t, self.window)
+        plot_scaled(img_t, self.window, vmax=vmax)
         plot_xpatches()
         plot_len_cuts_scaled()
 
@@ -138,8 +144,6 @@ class ViTImgGen:
         plt.xlim(-512, 512)
         plt.xlabel("Genomic position, bp", fontsize=16, labelpad=10)
         plt.ylabel("Fragment\nclass", fontsize=16, labelpad=10)
-
-        print(smoothed.shape, img_t.shape)
 
 
 def subselect_resize(smoothed, len_subselect, resize_size):
@@ -162,11 +166,11 @@ def partition_and_resize(smoothed, len_cuts, sublen_size, pos_resize):
     return scaled_img, img_slices
 
 
-def plot_scaled(scaled_img, window):
+def plot_scaled(scaled_img, window, vmax=0.25):
 
     win_2 = window//2
 
-    plt.imshow(scaled_img, vmax=0.25, cmap='magma_r', origin='lower', aspect='auto',
+    plt.imshow(scaled_img, vmax=vmax, cmap='magma_r', origin='lower', aspect='auto',
            extent=[-win_2, win_2, 0, 12], interpolation='none')
 
     plt.yticks([2, 6, 10], ['Small', 'Interm.', 'Nucleo.'])
@@ -177,7 +181,6 @@ def subselect_resize(smoothed, len_subselect, resize_size):
     smooth_sub = smoothed.loc[len_subselect[0]:len_subselect[1]-1]
     img_t = cv2.resize(smooth_sub.values, (resize_size[1], resize_size[0]))
     return smooth_sub, img_t
-
 
 def main():
 
@@ -201,16 +204,13 @@ def main():
     orfs = pd.read_csv('data/orfs_cd_paper_dataset.csv').set_index('orf_name')
 
     # Partitions lengths of fragments into equal sized (length-wise) patches
-    # Small fragments: 45-89
-    # Intermediate fragments: 90-139
-    # Nucleosomal fragments: 140-200
-    len_cuts = [45, 90, 140, 201]
+    len_cuts = data_config.LEN_CUTS
 
     cuts = len(len_cuts)-1 # 3
-    window = 1024
+    window = data_config.WINDOW
     
-    img_height = 24
-    img_width = 128
+    img_height = data_config.IMG_HEIGHT
+    img_width = data_config.IMG_WIDTH
 
     patch_size = img_height // cuts
     sublength_resize_height = patch_size # times 3 vertical patches of height

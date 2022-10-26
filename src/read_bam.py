@@ -6,7 +6,7 @@ import pandas as pd
 from src.utils import run_cmd, print_fl
 
 
-def read_mnase_bam(filename, sample=None, timer=None):
+def read_mnase_bam(filename, sample=None, timer=None, chroms=list(range(1, 17))):
     """
     Read mnase data from bam file. Return a pandas dataframe of x start coordinate, 
     x end coordinate, chromosome, fragment length, and sequence. BAM File
@@ -17,7 +17,7 @@ def read_mnase_bam(filename, sample=None, timer=None):
     data = {'start':[], 'length': [], 'stop': [],
             'mid': [], 'chr': [], 'sample': []}
 
-    for chrom in range(1, 17):
+    for chrom in chroms:
 
         if timer is not None:
             timer.print_label(f"Chromosome {chrom}")

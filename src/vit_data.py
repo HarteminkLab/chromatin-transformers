@@ -29,14 +29,11 @@ class ViTData(Dataset):
         self.unscaled_TPM = self.TPM
         self.predict_tpm = predict_tpm
         self.all_imgs_untransformed = self.all_imgs.copy()
+        self.img_transform = transforms.Normalize((0.5), (0.5), (0.5))
+        self.orfs_data = read_orfs_data('data/orfs_cd_paper_dataset.csv')
         self.init_transforms()
 
-
     def init_transforms(self):
-
-        img_transform = transforms.Normalize((0.5), (0.5), (0.5))
-
-        self.orfs_data = read_orfs_data('data/orfs_cd_paper_dataset.csv')
 
         # Predict absolute expression level
         if predict_tpm == 'absolute':
@@ -257,7 +254,7 @@ def read_mnase_pickle(pickle_paths):
 def load_cell_cycle_data(replicate_mode, channel_1_time, predict_tpm, 
     init_class=ViTData, debug_n=None):
 
-    data_dir = 'data/vit/cell_cycle_24x128_p1'
+    data_dir = 'data/vit/cell_cycle'
     file_prefix = 'vit_imgs_24x128'
     
     pickle_paths_1 = (f'{data_dir}/{file_prefix}_DMAH64_MNase_rep1_0_min.pkl',
