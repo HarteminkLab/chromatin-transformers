@@ -71,7 +71,13 @@ def find_small_prom(cur_data, plot=True):
     return found_index.values[0]
 
 
-def find_p1(cur_data, nuc_len_span):
+def find_p1(cur_data, vit_gen):
+
+    number_of_cols = (vit_gen.img_width // vit_gen.patch_size)
+    original_src_patch_width = vit_gen.window // number_of_cols
+    half_patch_shift = original_src_patch_width // 2
+
+    nuc_len_span = vit_gen.len_cuts[-2], vit_gen.len_cuts[-1]
     
     window_size = cur_data.shape[1]
     window_size_2 = window_size//2
@@ -88,17 +94,18 @@ def find_p1(cur_data, nuc_len_span):
     return found_index.values[0]
 
 
-def shift_for_p1(smoothed, vit_gen):
+def shift_for_p1(smoothed, vit_gen, p1_pos=None):
 
     number_of_cols = (vit_gen.img_width // vit_gen.patch_size)
     original_src_patch_width = vit_gen.window // number_of_cols
     half_patch_shift = original_src_patch_width // 2
-
+    padding = vit_gen.window_padding
     nuc_len_span = vit_gen.len_cuts[-2], vit_gen.len_cuts[-1]
 
+    # If p1_position isn't provided, autofind it
     # Find the +1 nucleosome in the nucleosome fragment length span
-    p1_pos = find_p1(smoothed, nuc_len_span)
-    padding = vit_gen.window_padding
+    if p1_pos is None:
+        p1_pos = find_p1(smoothed, vit_gen)
 
     # Shifted image additional padding to allow for the placement
     # of the source data anywhere in the new image with indexing errors

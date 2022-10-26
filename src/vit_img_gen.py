@@ -27,7 +27,7 @@ from config.data_gen import data24x128 as data_config
 class ViTImgGen:
 
     def __init__(self, mnase, window, sublength_resize_height, len_cuts, img_width, patch_size,
-                 window_padding=160):
+                 window_padding=160, computed_p1_positions=None):
 
         self.mnase = mnase
         self.window = window
@@ -41,6 +41,10 @@ class ViTImgGen:
         # Computed attributes
         self.column_patches = img_width / patch_size
         self.patch_width_bp = window / self.column_patches
+        self.computed_p1_positions = computed_p1_positions
+
+        if computed_p1_positions is not None:
+            print_fl("Loading precomputed +1 nucleosome positions")
 
 
     def get_mnase_img(self, gene):
@@ -52,9 +56,13 @@ class ViTImgGen:
         span = gene.TSS-win_2-self.window_padding, gene.TSS+win_2+self.window_padding
         gene_mnase = filter_mnase(self.mnase, span[0], span[1], gene.chr)
 
-        return self.get_mnase_image_for_mnase(span, gene_mnase, flip=(gene.strand == '-'))
+        if self.computed_p1_positions is not None:
+            p1_pos = self.computed_p1_positions.loc[gene.name]['p1_position']
 
-    def get_mnase_image_for_mnase(self, span, gene_mnase, flip):
+        return self.get_mnase_image_for_mnase(span, gene_mnase, flip=(gene.strand == '-'), 
+            p1_pos=p1_pos)
+
+    def get_mnase_image_for_mnase(self, span, gene_mnase, flip, p1_pos=None):
 
         win_2 = self.window//2
         len_cuts = self.len_cuts 
@@ -78,7 +86,7 @@ class ViTImgGen:
 
         # Find the enrichment of the +1 nucleosome and shift the data frame appropirately
         # will also crop out the padding of the window
-        shifted, p1_pos = shift_for_p1(smoothed_df, self)
+        shifted, p1_pos = shift_for_p1(smoothed_df, self, p1_pos=p1_pos)
         shifted_df = pd.DataFrame(shifted, index=lens, columns=np.arange(-win_2, win_2))
 
         scaled_img, img_slices = partition_and_resize(shifted_df, len_cuts, sublength_resize_height, 
@@ -199,6 +207,9 @@ def main():
 
     mkdir_safe(out_dir)
 
+    computed_p1_positions = pd.read_csv(f'{out_dir}/compute_+1_positions.csv')\
+        .set_index('orf_name')
+
     print("Reading BAM...")
     mnase = read_mnase_bam(bam_file, timer=timer)
     orfs = pd.read_csv('data/orfs_cd_paper_dataset.csv').set_index('orf_name')
@@ -216,7 +227,7 @@ def main():
     sublength_resize_height = patch_size # times 3 vertical patches of height
 
     vit_gen = ViTImgGen(mnase, window, sublength_resize_height, len_cuts,
-                        img_width, patch_size)
+                        img_width, patch_size, computed_p1_positions=computed_p1_positions)
     imgs = np.zeros((len(orfs), img_height, img_width))
     p1_poses = np.zeros((len(orfs),))
     i = 0
