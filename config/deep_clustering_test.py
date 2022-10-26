@@ -2,12 +2,12 @@
 NUM_CLASSES = 4
 IN_CHANNELS = 1
 
-IMG_SIZE = (24, 128)
+IMG_SIZE = (2, 2)
 BATCH_SIZE = 96
-PATCH_SIZE = 8
-EMB_SIZE = 12
-DEPTH = 4
-NUM_HEADS = 4
+PATCH_SIZE = 1
+EMB_SIZE = 6
+DEPTH = 2
+NUM_HEADS = 2
 FORWARD_EXPANSION = 2
 
 SPLIT_TYPE = "proportion"
@@ -27,4 +27,4 @@ PERTURBATION_LOSS_LIM = 0.75
 DROPOUT = 0.05
 
 DATA_FUNC = 'load_cell_cycle_data'
-OUT_DIR = 'output/deep_clustering_simple'
+OUT_DIR = 'output/deep_clustering_test'

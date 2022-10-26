@@ -20,7 +20,9 @@ class ViTDataDeepClustering(ViTData):
     def __init__(self, all_imgs, orfs, chrs, times, TPM, channel_1_time, predict_tpm, debug_n=None):
 
         if debug_n is not None:
-            indices = np.random.choice(np.arange(len(all_imgs)), debug_n)
+            
+            indices = np.arange(len(all_imgs))[times == 20]
+
             all_imgs = all_imgs[indices]
             orfs = orfs[indices]
             chrs = chrs[indices]
@@ -34,18 +36,20 @@ class ViTDataDeepClustering(ViTData):
         return (idx, self.all_imgs[idx], self.pseudo_labels[idx])
 
     def init_transforms(self):
-        return
+        self.all_imgs = self.img_transform(torch.tensor(self.all_imgs)).detach().numpy()
 
-    def get_label_counts_str(self):
+    def get_label_counts(self):
         labels = self.pseudo_labels
         label_counts = np.array(np.unique(labels, return_counts=True)).T
 
         n = len(labels)
         summary_str = []
+        summary_counts = {}
 
         for i in range(len(label_counts)):
             label = int(label_counts[i, 0])
             count = int(label_counts[i, 1])
+            summary_counts[label] = count
             summary_str.append(f"{label}: {count}/{n} ({count/n*100:.0f}%)")
             
-        return ", ".join(summary_str)
+        return summary_counts, ", ".join(summary_str)

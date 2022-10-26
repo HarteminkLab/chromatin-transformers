@@ -67,11 +67,12 @@ class ViTDeepClusterTrainer:
 
         # Value of training loss to stop training
         self.stoploss_value = 1e-5
-        self.lr = 0.001
+        self.lr = vit.config.LR
         self.momentum = 0.9
         self.epochs = 2000000
         self.save_every = 100
         self.save_every_long = 1000
+        self.print_every = 100
 
     def setup(self):
 
@@ -85,7 +86,7 @@ class ViTDeepClusterTrainer:
         if optimizer_name == 'SGD':
             self.optimizer = optim.SGD(vit.parameters(), lr=self.lr, momentum=self.momentum)
         elif optimizer_name == 'Adam':
-            self.optimizer = optim.Adam(vit.parameters(), lr=0.001)
+            self.optimizer = optim.Adam(vit.parameters(), lr=self.lr)
         else:
             raise ValueError(f"Invalid optimizer: {optimizer_name}")
 
@@ -120,7 +121,7 @@ class ViTDeepClusterTrainer:
                 map_location=torch.device('cpu')))
             print_fl(f"Resuming from {last_epoch}...")
 
-        self.epochs_to_run = np.arange(last_epoch+1, last_epoch+self.epochs)
+        
         self.model_save_path = f"{self.out_dir}/model.torch"
         self.loss_path = f"{self.out_dir}/loss.csv"
         self.loss_fig_path = f"{self.out_dir}/loss.png"
@@ -129,8 +130,15 @@ class ViTDeepClusterTrainer:
         self.min_validation_model = None
 
 
-    def train(self):
+    def train(self, total_epochs=100000, plot_results=False):
 
+        self.epochs_arr = []
+        self.train_losses = []
+        self.proportions = {}
+        for c in range(self.config.NUM_CLASSES):
+            self.proportions[c] = []
+
+        self.epochs_to_run = np.arange(1, total_epochs)
         vit = self.vit
         epochs_arr = self.epochs_arr
         train_losses = self.train_losses
@@ -199,28 +207,35 @@ class ViTDeepClusterTrainer:
                 running_loss += loss.item()
 
             train_loss = (running_loss / len(trainloader))
-            self.train_losses.append(train_loss)
-            self.epochs_arr.append(epoch)
+
+            if epoch % 2 == 0:
+                label_counts, counts_str = self.dataloader.dataset.get_label_counts()
+                self.train_losses.append(train_loss)
+                self.epochs_arr.append(epoch)
+                for c in label_counts.keys():
+                    self.proportions[c].append(label_counts[c])
+
+            param_sum = 0
+            for p in vit.parameters():
+                param_sum += p.sum().detach().numpy()
 
             # Clustering for pseudo labels
             self.cluster_and_assign_pseudo_labels()
 
-            if epoch % 10 == 0:
-
-                if fig is not None:
+            if epoch % self.print_every == 0:
+                label_counts, counts_str = self.dataloader.dataset.get_label_counts()
+                if plot_results and fig is not None:
                     plt.close(fig)
                     plt.cla()
                     plt.clf()
 
-                fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(12, 4))
+                print_fl('[%d] %.3f loss, %s' % (epoch+1, train_loss, counts_str))
 
-                print_fl('[%d] %.3f loss, %s' % (epoch+1, train_loss, 
-                    self.dataloader.dataset.get_label_counts_str()))
-                fig = self.plot_pacmap_labels(ax0)
-
-                ax1.plot(self.epochs_arr, self.train_losses)
-
-                plt.savefig(f"{self.out_dir}/progress.png")
+                if plot_results:
+                    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(12, 4))
+                    self.plot_pacmap_labels(ax0)
+                    ax1.plot(self.epochs_arr, self.train_losses)
+                    plt.savefig(f"{self.out_dir}/progress.png")
 
                 torch.save(vit.state_dict(), model_save_path)
 
@@ -242,18 +257,30 @@ class ViTDeepClusterTrainer:
             embedding = pacmap.PaCMAP(n_components=2)
             pacmap_embeddings = embedding.fit_transform(penult_weights.detach().numpy())
 
-        ax.scatter(pacmap_embeddings[:, 0], pacmap_embeddings[:, 1], c=pseudo_labels)
+        for l in set(pseudo_labels):
+            idx = (pseudo_labels == l)
+            ax.scatter(pacmap_embeddings[idx, 0], pacmap_embeddings[idx, 1], 
+                label=f"Cluster {l:.0f}", s=1)
+
+        ax.legend()
 
 
     def cluster_and_assign_pseudo_labels(self):
+
+        seed = 0
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
 
         k = self.config.NUM_CLASSES
         
         # Compute the label weights and penultimate layer's weights
         # as features for clustering
-        res = self.vit(torch.Tensor(self.dataloader.dataset[:][1]))
-        (label_weights, pen_x), att_weights = res
+        with torch.no_grad():
+            res = self.vit(torch.Tensor(self.dataloader.dataset[:][1]))
+            (label_weights, pen_x), att_weights = res
 
+        np.random.seed(123)
         kmeans = KMeans(n_clusters=k, random_state=123).fit(pen_x.detach().numpy())
         indices = np.arange(len(pen_x))
 
