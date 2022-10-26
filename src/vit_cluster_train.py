@@ -216,7 +216,7 @@ class ViTDeepClusterTrainer:
 
                 print_fl('[%d] %.3f loss, %s' % (epoch+1, train_loss, 
                     self.dataloader.dataset.get_label_counts_str()))
-                fig = self.plot_pacmap_labels(ax0)
+                # fig = self.plot_pacmap_labels(ax0)
 
                 ax1.plot(self.epochs_arr, self.train_losses)
 
@@ -234,6 +234,7 @@ class ViTDeepClusterTrainer:
 
 
     def plot_pacmap_labels(self, ax):
+        
         vit = self.vit
         data = self.dataloader.dataset
         with torch.no_grad():
