@@ -41,4 +41,3 @@ done
 
 #RNA_DIR="/usr/xtmp/tqtran/data/cell_cycle/rna/"
 #sbatch -D ./slurm-logs/ --job-name="vrna_$i" --export="PYFILE=src/vit_rna_gen.py,ARGS=$RNA_DIR" scripts/cpu_job.sh
-

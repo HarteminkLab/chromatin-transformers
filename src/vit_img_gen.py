@@ -93,7 +93,6 @@ class ViTImgGen:
             img_width)
 
         # Shift by half a patch
-
         self.img = img
         self.scaled_img = scaled_img
         self.smoothed = shifted_df

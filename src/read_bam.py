@@ -87,8 +87,7 @@ def read_rna_seq(filename, sample=None, timer=None):
             'chr': [], 'stop': [], 'sample': []}
     for chrom in range(1, 17):
 
-        if timer is not None:
-            timer.print_label(f"Chromosome {chrom}")
+        print(f"{chrom}", end="..")
 
         # get chromosome reads
         try:

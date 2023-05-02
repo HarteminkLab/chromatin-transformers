@@ -620,6 +620,16 @@ def plot_tpm_cluster_idx(trainer, orfs_120, current_idx):
     plt.xlim(0, 5)
     plt.ylabel("$\\log$ TPM")
 
+from einops.layers.torch import Rearrange, Reduce
+
+def pivot_images(imgs, times):
+    pivot = Rearrange('(t n) (i) (r) (c) -> n t i r c', t=len(times))
+    pivoted_imgs = pivot(torch.Tensor(imgs)).numpy()
+    pivoted_imgs = pivoted_imgs.reshape((pivoted_imgs.shape[0], 2, pivoted_imgs.shape[1], 
+                                             pivoted_imgs.shape[3], pivoted_imgs.shape[4]))
+    pivoted_imgs.shape
+    return pivoted_imgs
+
 
 def compute_rand_att_vec_distances(atts_vec, k):
     indices = np.random.choice(len(atts_vec), (k, 2), replace=True)
@@ -665,3 +675,50 @@ def compute_sampled_entropy(atts_vec, k):
     entropy_val = entropy(atts_vec[indices, :])
     return entropy_val
 
+
+def plot_typhoon(idx, vit_data, times, pivoted_imgs, vmin=0, vmax=0.5):
+    gene_name = vit_data.orfs_data.loc[vit_data.orfs[idx]]['name']
+    
+    fig, axs = plt.subplots(len(times), 2, figsize=(8, 10))
+    fig.tight_layout(rect=[0.0, 0.0, 1.0, 0.95])
+    plt.subplots_adjust(hspace=0.2, wspace=0.2)
+
+    for i in range(len(times)):
+        
+        for c in [0, 1]:
+            ax = axs[i][c]
+            time = times[i]
+            img = pivoted_imgs[idx, c, i]
+
+            ax.imshow(img, origin='lower', cmap='magma_r', extent=[-512, 512, 0, 250],
+             vmin=vmin, vmax=vmax, aspect='auto')
+            ax.set_xticks([])
+            ax.set_yticks([])
+
+            ylabel = "αf" if time == 0 else int(time) 
+            ax.set_ylabel(ylabel, fontsize=12)
+            for x in [0]:
+                ax.axvline(x, c='black', lw=1)
+
+    plt.suptitle(gene_name)
+
+def fourier_score(dat, t, period, highest_offset):
+    import math
+    from sklearn.preprocessing import scale
+
+    max_f_score = float('-inf')
+    max_offset = None
+    for offset in np.arange(0, highest_offset, 1):
+        w = 2*math.pi / period
+
+        # Offset is some proportion of the period, which is scaled against
+        # the angle of the unit circle
+        translated_offset = 2*math.pi * offset / period 
+
+        cur_f_score = np.sqrt(np.sum(np.sin(w*t + translated_offset) * dat)**2 + \
+            np.sum(np.cos(w*t + translated_offset) * dat)**2)
+
+        if cur_f_score > max_f_score:
+            max_f_score = cur_f_score
+            max_offset = offset
+    return max_f_score, max_offset
