@@ -15,6 +15,7 @@ declare -a BAMFILES=("/usr/xtmp/tqtran/data/cell_cycle/mnase/DMAH64_MNase_rep1_0
                      "/usr/xtmp/tqtran/data/cell_cycle/mnase/DMAH77_MNase_rep1_130_min.bam"
                      "/usr/xtmp/tqtran/data/cell_cycle/mnase/DMAH78_MNase_rep1_140_min.bam"
                      "/usr/xtmp/tqtran/data/cell_cycle/mnase/DMAH79_MNase_rep1_150_min.bam"
+                     
                      "/usr/xtmp/tqtran/data/cell_cycle/mnase/DMAH82_MNase_rep2_0_min.bam"
                      "/usr/xtmp/tqtran/data/cell_cycle/mnase/DMAH83_MNase_rep2_10_min.bam"
                      "/usr/xtmp/tqtran/data/cell_cycle/mnase/DMAH84_MNase_rep2_20_min.bam"

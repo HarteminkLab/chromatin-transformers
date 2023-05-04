@@ -16,11 +16,12 @@ from sklearn.preprocessing import scale
 
 class ViTData(Dataset):
 
-    def __init__(self, all_imgs, orfs, chrs, times, TPM, channel_1_time, predict_tpm):
+    def __init__(self, all_imgs, orfs, chrs, times, TPM, channel_1_time, predict_tpm, debug_n=False):
 
         (self.all_imgs, self.orfs, self.chrs, self.times, 
          self.TPM) = all_imgs, orfs, chrs, times, TPM
 
+        self.channel_1_time = channel_1_time
         self.original_imgs = self.all_imgs.copy()
         self.original_chrs = self.chrs
         self.original_TPM = self.TPM
@@ -35,6 +36,9 @@ class ViTData(Dataset):
 
     def init_transforms(self):
 
+        predict_tpm = self.predict_tpm
+        channel_1_time = self.channel_1_time
+
         # Predict absolute expression level
         if predict_tpm == 'absolute':
             self.TPM = scale(np.log2(self.TPM+1).astype('float')).astype('float')
@@ -45,7 +49,7 @@ class ViTData(Dataset):
         else:
             raise ValueError(f"Unsupported TPM prediction {predict_tpm}")
 
-        self.all_imgs = img_transform(torch.tensor(self.all_imgs))
+        self.all_imgs = self.img_transform(torch.tensor(self.all_imgs))
 
         if channel_1_time is not None:
             (all_imgs, chrs, TPM, orfs, times) = \
@@ -160,7 +164,7 @@ class ViTData(Dataset):
             self.plot_gene_time(gene_name, time, fig)
             plt.yticks([])
 
-    def plot_gene_time(self, gene_name, time, fig=None):
+    def plot_gene_time(self, gene_name, rep, time, fig=None):
         import matplotlib.pyplot as plt
 
         if fig is None:
@@ -169,9 +173,10 @@ class ViTData(Dataset):
         idx = self.index_for(gene_name, time)
         dat = self.all_imgs[idx]
 
-        plt.imshow(dat[1], cmap='magma_r', vmin=-1, vmax=-0.5, origin='lower', 
+        plt.imshow(dat[rep], cmap='magma_r', vmin=-1, vmax=-0.5, origin='lower', 
             extent=[-512, 512, 0, 225], aspect='auto', interpolation='none')
         plt.xticks([])
+        plt.yticks([])
         plt.ylim(20, 225)
         plt.axvline(0, c='blue', lw=1, linestyle='solid')
 
@@ -296,13 +301,16 @@ def load_data(pickle_paths_1, pickle_paths_2, rna_TPM_path, replicate_mode,
     all_imgs_1, times, orfs, chrs, df = read_mnase_pickle(pickle_paths_1)
     all_imgs_2, _, _, _, _ = read_mnase_pickle(pickle_paths_2)
 
+    times1 = [0, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150]
+    times2 = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140]
+
     # Merge the replicates
     if replicate_mode == 'merge':
         all_imgs = (all_imgs_1 + all_imgs_2)
 
     # Treat replicates as separate channels
     elif replicate_mode == 'channels':
-        all_imgs = np.concatenate([all_imgs_1, all_imgs_1], axis=1)
+        all_imgs = np.concatenate([all_imgs_1, all_imgs_2], axis=1)
 
     else:
         raise ValueError(f"Unimplemented {replicate_mode}")
