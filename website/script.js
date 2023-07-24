@@ -3,9 +3,16 @@ const sliderImage = document.querySelector('.slider-image');
 
 sliderInput.addEventListener('input', () => {
   const imageIndex = sliderInput.value;
+  const imageName = imageForIndex(imageIndex);
+  sliderImage.setAttribute('src', imageName);
+});
 
-  console.log(imageIndex);
+function imageForIndex(imageIndex) {
+  const imageName = `../output/deconvolution/clb2/clb2_deconvolved_${imageIndex}.png`;
+  return imageName;
+}
 
-  const imageName = `output/deconvolution/clb2/clb2_deconvolved_${imageIndex}.png`;
+document.addEventListener('DOMContentLoaded', () => {
+  const imageName = imageForIndex(2);
   sliderImage.setAttribute('src', imageName);
 });

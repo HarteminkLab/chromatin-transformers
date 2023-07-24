@@ -1,7 +1,17 @@
+h1 {
+  font-family: "Helvetica Neue", sans-serif;
+  font-style: italic;
+  font-size: 42px;
+}
+
 body {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.image-slider-container {
+  transform: scale(1.25);
 }
 
 .slider {

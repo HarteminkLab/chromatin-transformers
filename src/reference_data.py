@@ -73,10 +73,9 @@ def read_centromeres():
     return cens
 
 
-def read_sgd():
+def read_sgd(filename='data/saccharomyces_cerevisiae_R64-1-1_20110208_no_fasta.gff'):
     """Read sgd orf/genes file as tsv file from gff file with fasta data removed."""
 
-    filename = 'data/saccharomyces_cerevisiae_R64-1-1_20110208_no_fasta.gff'
     data = pd.read_csv(filename, sep='\t', skiprows=19, 
                               names=["chr", "source", "cat", "start", "stop", ".", 
                               "strand", "", "desc"])
@@ -157,11 +156,11 @@ def orfs_for_go_term(go_term):
     return orfs
 
 
-def read_sgd_orfs():
+def read_sgd_orfs(filename):
 
     from pandas import Series
 
-    data = read_sgd()
+    data = read_sgd(filename)
     orfs = data[data['cat'] == 'gene'].copy()
     orfs['orf_name'] = None
     orfs['orf_class'] = None
