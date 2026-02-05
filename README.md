@@ -5,8 +5,8 @@ This repository implements a vision transformer model that predicts gene transcr
 
 ## Model
 
-<div style="text-align: center;">
-	<img src="https://github.com/HarteminkLab/chromatin-transformers/blob/main/figures/1_model_architecture.jpg" width="70%" align="center"/>
+<div align="center">
+	<img src="https://github.com/HarteminkLab/chromatin-transformers/blob/main/figures/1_model_architecture.jpg" width="70%"/>
 </div>
 
 The architecture uses a vision transformer approach that:
@@ -32,16 +32,16 @@ The dual-subnetwork architecture processes each input channel independently befo
 
 ## Results
 
-<div style="text-align: center;">
-	<img src="https://github.com/HarteminkLab/chromatin-transformers/blob/main/figures/2_model_performance.jpg" width="40%" align="center"/>
+<div align="center">
+	<img src="https://github.com/HarteminkLab/chromatin-transformers/blob/main/figures/2_model_performance.jpg" width="60%"/>
 </div>
 
 The best performing model achieved R² = 0.709 on the held-out test set, substantially outperforming the baseline (R² = 0.44). Learned attention weights successfully identify predictive chromatin features and can be visualized to understand which genomic regions most influence transcriptional output.
 
 ## Attention Weight Analysis
 
-<div style="text-align: center;">
-	<img src="https://github.com/HarteminkLab/chromatin-transformers/blob/main/figures/3_learned_attentions.jpg" width="70%" align="center"/>
+<div align="center">
+	<img src="https://github.com/HarteminkLab/chromatin-transformers/blob/main/figures/3_learned_attentions.jpg" width="70%"/>
 </div>
 
 The transformer architecture enables direct interpretation of predictive chromatin features through attention weight visualization. For each gene, the model's attention weights can be extracted and merged to highlight the most informative patches in the input MNase-seq images. 
