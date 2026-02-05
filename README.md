@@ -5,8 +5,7 @@ This repository implements a vision transformer model that predicts gene transcr
 
 ## Model
 
-<img src="https://github.com/HarteminkLab/chromatin-transformers/blob/main/figures/1_model_architecture.jpg" width="70%"/>
-
+<img src="https://github.com/HarteminkLab/chromatin-transformers/blob/main/figures/1_model_architecture.jpg" width="70%" align="center"/>
 
 The architecture uses a vision transformer approach that:
 Segments MNase-seq chromatin images into patches
@@ -28,5 +27,17 @@ Test set: 120-minute time point (held out)
 ## Training
 The dual-subnetwork architecture processes each input channel independently before merging for final predictions, enabling optimal learning of channel-specific chromatin patterns.
 
+
 ## Results
+
+<img src="https://github.com/HarteminkLab/chromatin-transformers/blob/main/figures/2_model_performance.jpg" width="70%" align="center"/>
+
 The best performing model achieved R² = 0.709 on the held-out test set, substantially outperforming the baseline (R² = 0.44). Learned attention weights successfully identify predictive chromatin features and can be visualized to understand which genomic regions most influence transcriptional output.
+
+## Attention Weight Analysis
+
+<img src="https://github.com/HarteminkLab/chromatin-transformers/blob/main/figures/3_learned_attentions.jpg" width="70%" align="center"/>
+
+The transformer architecture enables direct interpretation of predictive chromatin features through attention weight visualization. For each gene, the model's attention weights can be extracted and merged to highlight the most informative patches in the input MNase-seq images. 
+
+This reveals which specific chromatin regions drive transcriptional predictions. These highlighted regions can then be subjected to motif and sequence analysis to discover transcription factor binding sites and other small regulatory elements in gene promoters, providing biological insight into the chromatin features that govern gene expression.
