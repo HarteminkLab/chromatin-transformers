@@ -47,7 +47,7 @@ The transformer architecture enables direct interpretation of predictive chromat
 This reveals which specific chromatin regions drive transcriptional predictions. These highlighted regions can then be subjected to motif and sequence analysis to discover transcription factor binding sites and other small regulatory elements in gene promoters, providing biological insight into the chromatin features that govern gene expression.
 
 <div align="center">
-	<img src="https://github.com/HarteminkLab/chromatin-transformers/blob/main/figures/3_learned_attentions.jpg" width="40%"/>
+	<img src="https://github.com/HarteminkLab/chromatin-transformers/blob/main/figures/3_learned_attentions.jpg" width="70%"/>
 	<p>
 		Figure 3. Learned attention weights identify features of the chromatin most informative in predicting transcription. Row 2 shows the predicted transcript level (second row; red X) matches well with the true transcript level (second row; green circle). Rows 3-5 depict the source MNase-seq and attention weights for 0 minute sample for <em>PDC6</em>, Rows 6-8 depict the source MNase-seq and attention weights for 120 minute sample for <em>PDC6</em>.
 	</p>
