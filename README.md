@@ -5,7 +5,7 @@ This repository implements a vision transformer model that predicts gene transcr
 
 ## Model
 
-![image](figures/VisionTransformers_Fig1.pdf)
+![image](figures/1_model_architecture.png)
 
 The architecture uses a vision transformer approach that:
 Segments MNase-seq chromatin images into patches
