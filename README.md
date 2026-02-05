@@ -33,7 +33,7 @@ The dual-subnetwork architecture processes each input channel independently befo
 ## Results
 
 <div align="center">
-	<img src="https://github.com/HarteminkLab/chromatin-transformers/blob/main/figures/2_model_performance.jpg" width="60%"/>
+	<img src="https://github.com/HarteminkLab/chromatin-transformers/blob/main/figures/2_model_performance.jpg" width="70%"/>
 </div>
 
 The best performing model achieved R² = 0.709 on the held-out test set, substantially outperforming the baseline (R² = 0.44). Learned attention weights successfully identify predictive chromatin features and can be visualized to understand which genomic regions most influence transcriptional output.
@@ -41,7 +41,7 @@ The best performing model achieved R² = 0.709 on the held-out test set, substan
 ## Attention Weight Analysis
 
 <div align="center">
-	<img src="https://github.com/HarteminkLab/chromatin-transformers/blob/main/figures/3_learned_attentions.jpg" width="70%"/>
+	<img src="https://github.com/HarteminkLab/chromatin-transformers/blob/main/figures/3_learned_attentions.jpg" width="40%"/>
 </div>
 
 The transformer architecture enables direct interpretation of predictive chromatin features through attention weight visualization. For each gene, the model's attention weights can be extracted and merged to highlight the most informative patches in the input MNase-seq images. 
