@@ -14,7 +14,7 @@ echo "batch: Starting job on $(date)"
 . /usr/xtmp/tqtran/anaconda3/etc/profile.d/conda.sh
 
 # activate environment
-conda activate cadmium-py3
+conda activate chromatin-transformers
 
 python $PYFILE $ARGS
 

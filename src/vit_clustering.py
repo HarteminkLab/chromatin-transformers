@@ -217,12 +217,11 @@ class MergeHead(nn.Module):
         self.layers.append(copy.deepcopy(layer))
 
         # Forward through MLP
-        for d in range(depth):
+        for _ in range(depth):
             layer_norm = nn.LayerNorm(emb_size)
             layer = nn.Linear(emb_size, emb_size)
-            self.layers.append(layer_norm)
-            self.layers.append(layer)
-            if d == depth-1: self.penultimate_layer = layer
+            self.layers.append(copy.deepcopy(layer_norm))
+            self.layers.append(copy.deepcopy(layer))
 
         layer_norm = nn.LayerNorm(emb_size)
         layer = nn.Linear(emb_size, n_classes)
@@ -233,10 +232,7 @@ class MergeHead(nn.Module):
         x = self.rearrange(x)
         for layer_block in self.layers:
             x = layer_block(x)
-            if layer_block == self.penultimate_layer: pen_x = x
-
-        # Also return the second to last layer's values clustering features
-        return x, pen_x
+        return x
 
 
 class ViT(nn.Module):
@@ -258,20 +254,19 @@ class ViT(nn.Module):
         # Patch Embeddings and encoders per channel
         self.patches = nn.ModuleList()
         self.encoders = nn.ModuleList()
-
-        patch = PatchEmbedding(in_channels=1,
-            patch_size=self.patch_size, 
-            img_size=self.img_size, 
-            emb_size=self.emb_size)
-        encoder = TransformerEncoder(emb_size=self.emb_size, 
-                                          num_heads=self.num_heads,
-                                          transformer_depth=self.transformer_depth, 
-                                          forward_expansion=self.forward_expansion,
-                                          att_drop_p=self.att_drop_p,
-                                          forward_drop_p=self.forward_drop_p,
-                                           **kwargs)
-
         for _ in range(self.in_channels):
+
+            patch = PatchEmbedding(in_channels=1,
+                patch_size=self.patch_size, 
+                img_size=self.img_size, 
+                emb_size=self.emb_size)
+            encoder = TransformerEncoder(emb_size=self.emb_size, 
+                                              num_heads=self.num_heads,
+                                              transformer_depth=self.transformer_depth, 
+                                              forward_expansion=self.forward_expansion,
+                                              att_drop_p=self.att_drop_p,
+                                              forward_drop_p=self.forward_drop_p,
+                                               **kwargs)
             self.patches.append(copy.deepcopy(patch))
             self.encoders.append(copy.deepcopy(encoder))
 
