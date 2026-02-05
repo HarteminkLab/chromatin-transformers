@@ -4,6 +4,9 @@
 This repository implements a vision transformer model that predicts gene transcript levels from chromatin state data. By treating 2D MNase-seq data as images, the model learns regulatory features that drive transcription in an unbiased, data-driven manner.
 
 ## Model
+
+![image](figures/VisionTransformers_Fig1.pdf)
+
 The architecture uses a vision transformer approach that:
 Segments MNase-seq chromatin images into patches
 Processes patches through transformer encoder blocks to learn attention weights

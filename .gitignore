@@ -10,3 +10,5 @@ scratch_utils.py
 fimo
 data/*
 results*
+archive
+output

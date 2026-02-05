@@ -7,11 +7,11 @@
 # Example run:
 # sbatch -D ./slurm-logs/ --export="PYFILE=src/vit_train_cifar.py,ARGS=''" scripts/gpu_script.sh
 
-cd /usr/xtmp/tqtran/chromatin-transformers
+cd # To do: Ensure the script is running in the proper project directory
 
 echo "batch: Starting job on $(date)"
 
-. /usr/xtmp/tqtran/anaconda3/etc/profile.d/conda.sh
+# Note: ensure conda command is avaible, this may require sourcing the conda installation
 
 # activate environment
 conda activate chromatin-transformers
