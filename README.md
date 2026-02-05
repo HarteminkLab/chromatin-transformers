@@ -1,7 +1,7 @@
 # Vision Transformer for Chromatin-Based Gene Expression Prediction
 
 ## Overview
-This repository implements a vision transformer model that predicts gene transcript levels from chromatin state data. By treating 2D MNase-seq data as images, the model learns regulatory features that drive transcription in an unbiased, data-driven manner.
+A vision transformer model that predicts gene transcript levels from chromatin state data. By treating 2D MNase-seq data as images, the model learns local regulatory features that drive transcript levels in an empirical, data-driven manner.
 
 ## Model
 
