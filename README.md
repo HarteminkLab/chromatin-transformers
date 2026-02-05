@@ -5,7 +5,7 @@ This repository implements a vision transformer model that predicts gene transcr
 
 ## Model
 
-![image](figures/1_model_architecture.png)
+![image](https://github.com/HarteminkLab/chromatin-transformers/blob/main/figures/1_model_architecture.jpg=50%)
 
 The architecture uses a vision transformer approach that:
 Segments MNase-seq chromatin images into patches
